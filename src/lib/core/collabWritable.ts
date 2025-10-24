@@ -97,17 +97,25 @@ export function collabWritable<T extends Record<string, unknown>>(
 	logger.log("Creating store for room:", opts.room);
 
 	// Initialize Y.Map with initial value if empty
-	if (state.ymap.size === 0) {
-		logger.log("Initializing Y.Map with initial value");
-		state.ydoc.transact(() => {
-			Object.entries(initialValue).forEach(([key, value]) => {
-				state.ymap.set(key, value);
+	// Only initialize if the map is truly empty (no existing data)
+	const initializeYMap = () => {
+		if (state.ymap.size === 0) {
+			logger.log("Initializing Y.Map with initial value");
+			state.ydoc.transact(() => {
+				Object.entries(initialValue).forEach(([key, value]) => {
+					state.ymap.set(key, value);
+				});
 			});
-		});
-	} else {
-		// Load existing value from Y.Map
-		logger.log("Loading existing value from Y.Map");
-		state.value = ymapToObject(state.ymap) as T;
+		} else {
+			// Load existing value from Y.Map
+			logger.log("Loading existing value from Y.Map");
+			state.value = ymapToObject(state.ymap) as T;
+		}
+	};
+
+	// Initialize immediately if no WebSocket provider
+	if (!opts.serverUrl) {
+		initializeYMap();
 	}
 
 	// Set up Y.Map observer to update Svelte state
@@ -236,6 +244,17 @@ export function collabWritable<T extends Record<string, unknown>>(
 							status: "connected",
 							lastConnected: new Date(),
 						});
+						
+						// Only initialize if the map is still empty after sync
+						// This prevents overwriting existing data from other clients
+						if (state.ymap.size === 0) {
+							logger.log("Y.Map is empty after sync, initializing with default values");
+							initializeYMap();
+						} else {
+							logger.log("Y.Map has existing data after sync, loading it");
+							state.value = ymapToObject(state.ymap) as T;
+						}
+						
 						// Update value after sync with validation
 						const syncedValue = ymapToObject(state.ymap) as T;
 						if (isValidValue(syncedValue)) {
