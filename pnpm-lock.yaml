@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      lib0:
+        specifier: ^0.2.114
+        version: 0.2.114
       y-indexeddb:
         specifier: ^9.0.12
         version: 9.0.12(yjs@13.6.27)
