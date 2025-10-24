@@ -2,6 +2,11 @@
 
 > Reactive real-time collaboration primitives for Svelte — powered by Y.js CRDTs
 
+[![CI](https://github.com/rajsibajsi/svelte-collab/actions/workflows/ci.yml/badge.svg)](https://github.com/rajsibajsi/svelte-collab/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![Svelte](https://img.shields.io/badge/Svelte-5-orange.svg)](https://svelte.dev/)
+
 Transform any Svelte app into a collaborative experience with just a few lines of code. Built on top of battle-tested Y.js CRDTs, `svelte-collab` provides seamless real-time synchronization with automatic conflict resolution.
 
 ## ✨ Features
