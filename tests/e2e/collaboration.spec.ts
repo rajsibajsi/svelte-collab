@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Collaboration E2E Tests", () => {
 	// biome-ignore lint/suspicious/noExplicitAny: Test process variable needs flexible typing

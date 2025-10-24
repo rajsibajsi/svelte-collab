@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { spawn, type ChildProcess } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { collabWritable } from "../../src/lib/core/collabWritable.js";
 import type { CollabStore } from "../../src/lib/core/types.js";
 
