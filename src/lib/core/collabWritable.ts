@@ -6,6 +6,7 @@ import type {
 	CollabStore,
 	ConnectionState,
 	StoreState,
+	UserInfo,
 } from "./types.js";
 import {
 	createLogger,
@@ -14,6 +15,21 @@ import {
 	generateUserId,
 	ymapToObject,
 } from "./utils.js";
+
+/**
+ * Validate that a value doesn't contain NaN or other invalid values
+ */
+function isValidValue(value: unknown): boolean {
+	if (value === null || value === undefined) return true;
+	if (typeof value === "number" && Number.isNaN(value)) return false;
+	if (typeof value === "object" && value !== null) {
+		if (Array.isArray(value)) {
+			return value.every(isValidValue);
+		}
+		return Object.values(value).every(isValidValue);
+	}
+	return true;
+}
 
 /**
  * Creates a collaborative Svelte store backed by Y.js
@@ -29,8 +45,7 @@ import {
  * $store = { count: 1 };
  * ```
  */
-// biome-ignore lint/suspicious/noExplicitAny: Generic object store requires flexible typing
-export function collabWritable<T extends Record<string, any>>(
+export function collabWritable<T extends Record<string, unknown>>(
 	initialValue: T,
 	options: CollabOptions,
 ): CollabStore<T> {
@@ -39,16 +54,18 @@ export function collabWritable<T extends Record<string, any>>(
 		throw new Error("collabWritable: room option is required");
 	}
 
+	const user: UserInfo = options.user || {
+		id: generateUserId(),
+		name: "Anonymous",
+		color: generateUserColor(),
+	};
+
 	// Set defaults
 	const opts: Required<CollabOptions> = {
 		room: options.room,
 		serverUrl: options.serverUrl || "",
 		persist: options.persist !== false,
-		user: options.user || {
-			id: generateUserId(),
-			name: "Anonymous",
-			color: generateUserColor(),
-		},
+		user: user,
 		ydoc: options.ydoc || new Y.Doc(),
 		stateName: options.stateName || "state",
 		connectTimeout: options.connectTimeout || 5000,
@@ -98,43 +115,70 @@ export function collabWritable<T extends Record<string, any>>(
 		if (state.destroyed) return;
 
 		const newValue = ymapToObject(state.ymap) as T;
-		state.value = newValue;
-
-		// Notify all subscribers
-		state.subscribers.forEach((subscriber) => {
-			try {
-				subscriber(deepClone(newValue));
-			} catch (error) {
-				logger.error("Error in subscriber:", error);
-			}
-		});
+		
+		// Validate the new value before updating
+		if (isValidValue(newValue)) {
+			state.value = newValue;
+			
+			// Notify all subscribers
+			state.subscribers.forEach((subscriber) => {
+				try {
+					subscriber(deepClone(newValue));
+				} catch (error) {
+					logger.error("Error in subscriber:", error);
+				}
+			});
+		} else {
+			logger.warn("Invalid value from Y.Map observer, keeping current value");
+		}
 	};
 
 	state.ymap.observe(observer);
 
 	// Initialize providers
 	function initializeProviders() {
-		// IndexedDB persistence (browser only)
-		if (opts.persist && typeof indexedDB !== "undefined") {
-			try {
-				logger.log("Initializing IndexedDB persistence");
-				state.providers.indexeddb = new IndexeddbPersistence(
-					opts.room,
-					state.ydoc,
-				);
+	// IndexedDB persistence (browser only)
+	// Check if IndexedDB is available and working
+	const isIndexedDBAvailable = opts.persist && 
+		typeof indexedDB !== "undefined" && 
+		!window.location.href.includes("chrome://") && // Avoid chrome:// URLs
+		!window.location.href.includes("about:"); // Avoid about: URLs
+	
+	if (isIndexedDBAvailable) {
+		try {
+			logger.log("Initializing IndexedDB persistence");
+			state.providers.indexeddb = new IndexeddbPersistence(
+				opts.room,
+				state.ydoc,
+			);
 
-				state.providers.indexeddb.on("synced", () => {
-					logger.log("IndexedDB synced");
-					// Update value from persisted state
-					state.value = ymapToObject(state.ymap) as T;
+			state.providers.indexeddb.on("synced", () => {
+				logger.log("IndexedDB synced");
+				// Update value from persisted state
+				const persistedValue = ymapToObject(state.ymap) as T;
+				// Validate the persisted value to prevent NaN issues
+				if (isValidValue(persistedValue)) {
+					state.value = persistedValue;
 					state.subscribers.forEach((sub) => {
 						sub(deepClone(state.value));
 					});
-				});
-			} catch (error) {
-				logger.error("Failed to initialize IndexedDB:", error);
-			}
+				} else {
+					logger.warn("Invalid persisted value, using current value");
+				}
+			});
+
+			// Handle IndexedDB errors gracefully
+			state.providers.indexeddb.on("error", (error: Error) => {
+				logger.error("IndexedDB error:", error);
+				// Continue without persistence
+			});
+		} catch (error) {
+			logger.error("Failed to initialize IndexedDB:", error);
+			// Continue without persistence
 		}
+	} else if (opts.persist) {
+		logger.warn("IndexedDB not available (incognito mode or restricted environment), continuing without persistence");
+	}
 
 		// WebSocket provider
 		if (opts.serverUrl) {
@@ -175,16 +219,20 @@ export function collabWritable<T extends Record<string, any>>(
 							status: "connected",
 							lastConnected: new Date(),
 						});
-						// Update value after sync
-						state.value = ymapToObject(state.ymap) as T;
-						state.subscribers.forEach((sub) => {
-							sub(deepClone(state.value));
-						});
+						// Update value after sync with validation
+						const syncedValue = ymapToObject(state.ymap) as T;
+						if (isValidValue(syncedValue)) {
+							state.value = syncedValue;
+							state.subscribers.forEach((sub) => {
+								sub(deepClone(state.value));
+							});
+						} else {
+							logger.warn("Invalid synced value, keeping current value");
+						}
 					}
 				});
 
-				// biome-ignore lint/suspicious/noExplicitAny: WebSocket error event type is not well-defined
-				state.providers.websocket.on("connection-error", (event: any) => {
+				state.providers.websocket.on("connection-error", (event: unknown) => {
 					logger.error("WebSocket connection error:", event);
 					updateConnectionState({
 						status: "error",

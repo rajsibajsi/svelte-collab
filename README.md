@@ -380,7 +380,7 @@ Contributions are welcome! Please see [PROJECT_SPEC.md](./PROJECT_SPEC.md) for d
 
 ## 📄 License
 
-MIT © [Your Name]
+MIT © rajsibajsi
 
 ## 🙏 Acknowledgments
 
