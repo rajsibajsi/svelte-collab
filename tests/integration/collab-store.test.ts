@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
 import { type ChildProcess, spawn } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -8,22 +9,18 @@ import type { CollabStore } from "../../src/lib/core/types.js";
 if (typeof globalThis.WebSocket === "undefined") {
 	// biome-ignore lint/suspicious/noExplicitAny: Mock WebSocket for Node.js environment
 	globalThis.WebSocket = class WebSocket {
-		constructor() {
-			// Mock WebSocket constructor
-		}
-		
 		close() {
 			// Mock close method
 		}
-		
+
 		send() {
 			// Mock send method
 		}
-		
+
 		addEventListener() {
 			// Mock addEventListener method
 		}
-		
+
 		removeEventListener() {
 			// Mock removeEventListener method
 		}
@@ -336,7 +333,9 @@ describe("CollabWritable Integration", () => {
 		await sleep(1000);
 
 		// Should handle disconnection gracefully (may be disconnected, error, or connecting)
-		expect(["disconnected", "error", "connecting"]).toContain(connectionState.status);
+		expect(["disconnected", "error", "connecting"]).toContain(
+			connectionState.status,
+		);
 
 		unsubscribe();
 		unsubscribeConnection();
