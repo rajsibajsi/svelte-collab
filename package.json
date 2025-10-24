@@ -1,6 +1,7 @@
 {
 	"name": "svelte-collab",
 	"version": "0.0.1",
+	"packageManager": "pnpm@10.19.0",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run prepack",
