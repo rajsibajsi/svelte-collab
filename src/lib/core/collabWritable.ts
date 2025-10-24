@@ -114,71 +114,85 @@ export function collabWritable<T extends Record<string, unknown>>(
 	const observer = () => {
 		if (state.destroyed) return;
 
+		logger.log("Y.Map observer triggered");
 		const newValue = ymapToObject(state.ymap) as T;
-		
+		logger.log("New value from Y.Map:", newValue);
+
 		// Validate the new value before updating
 		if (isValidValue(newValue)) {
+			logger.log("Value is valid, updating state");
 			state.value = newValue;
-			
+
 			// Notify all subscribers
 			state.subscribers.forEach((subscriber) => {
 				try {
+					logger.log("Notifying subscriber with value:", deepClone(newValue));
 					subscriber(deepClone(newValue));
 				} catch (error) {
 					logger.error("Error in subscriber:", error);
 				}
 			});
 		} else {
-			logger.warn("Invalid value from Y.Map observer, keeping current value");
+			logger.warn("Invalid value from Y.Map observer, keeping current value:", newValue);
 		}
 	};
 
 	state.ymap.observe(observer);
+	
+	// Also observe the Y.Doc for changes
+	state.ydoc.on("update", () => {
+		logger.log("Y.Doc update event triggered");
+		// Trigger the observer manually to ensure it runs
+		observer();
+	});
 
 	// Initialize providers
 	function initializeProviders() {
-	// IndexedDB persistence (browser only)
-	// Check if IndexedDB is available and working
-	const isIndexedDBAvailable = opts.persist && 
-		typeof indexedDB !== "undefined" && 
-		!window.location.href.includes("chrome://") && // Avoid chrome:// URLs
-		!window.location.href.includes("about:"); // Avoid about: URLs
-	
-	if (isIndexedDBAvailable) {
-		try {
-			logger.log("Initializing IndexedDB persistence");
-			state.providers.indexeddb = new IndexeddbPersistence(
-				opts.room,
-				state.ydoc,
-			);
+		// IndexedDB persistence (browser only)
+		// Check if IndexedDB is available and working
+		const isIndexedDBAvailable =
+			opts.persist &&
+			typeof indexedDB !== "undefined" &&
+			!window.location.href.includes("chrome://") && // Avoid chrome:// URLs
+			!window.location.href.includes("about:"); // Avoid about: URLs
 
-			state.providers.indexeddb.on("synced", () => {
-				logger.log("IndexedDB synced");
-				// Update value from persisted state
-				const persistedValue = ymapToObject(state.ymap) as T;
-				// Validate the persisted value to prevent NaN issues
-				if (isValidValue(persistedValue)) {
-					state.value = persistedValue;
-					state.subscribers.forEach((sub) => {
-						sub(deepClone(state.value));
-					});
-				} else {
-					logger.warn("Invalid persisted value, using current value");
-				}
-			});
+		if (isIndexedDBAvailable) {
+			try {
+				logger.log("Initializing IndexedDB persistence");
+				state.providers.indexeddb = new IndexeddbPersistence(
+					opts.room,
+					state.ydoc,
+				);
 
-			// Handle IndexedDB errors gracefully
-			state.providers.indexeddb.on("error", (error: Error) => {
-				logger.error("IndexedDB error:", error);
+				state.providers.indexeddb.on("synced", () => {
+					logger.log("IndexedDB synced");
+					// Update value from persisted state
+					const persistedValue = ymapToObject(state.ymap) as T;
+					// Validate the persisted value to prevent NaN issues
+					if (isValidValue(persistedValue)) {
+						state.value = persistedValue;
+						state.subscribers.forEach((sub) => {
+							sub(deepClone(state.value));
+						});
+					} else {
+						logger.warn("Invalid persisted value, using current value");
+					}
+				});
+
+				// Handle IndexedDB errors gracefully
+				state.providers.indexeddb.on("error", (error: Error) => {
+					logger.error("IndexedDB error:", error);
+					// Continue without persistence
+				});
+			} catch (error) {
+				logger.error("Failed to initialize IndexedDB:", error);
 				// Continue without persistence
-			});
-		} catch (error) {
-			logger.error("Failed to initialize IndexedDB:", error);
-			// Continue without persistence
+			}
+		} else if (opts.persist) {
+			logger.warn(
+				"IndexedDB not available (incognito mode or restricted environment), continuing without persistence",
+			);
 		}
-	} else if (opts.persist) {
-		logger.warn("IndexedDB not available (incognito mode or restricted environment), continuing without persistence");
-	}
 
 		// WebSocket provider
 		if (opts.serverUrl) {
@@ -310,19 +324,25 @@ export function collabWritable<T extends Record<string, unknown>>(
 			logger.log("Setting value:", value);
 
 			state.ydoc.transact(() => {
+				logger.log("Inside Y.js transaction");
 				// Clear existing keys
 				const existingKeys = Array.from(state.ymap.keys());
+				logger.log("Existing keys:", existingKeys);
 				existingKeys.forEach((key) => {
 					if (!(key in value)) {
+						logger.log("Deleting key:", key);
 						state.ymap.delete(key);
 					}
 				});
 
 				// Set new values
 				Object.entries(value).forEach(([key, val]) => {
+					logger.log(`Setting key ${key} to value:`, val);
 					state.ymap.set(key, val);
 				});
 			});
+			
+			logger.log("Y.js transaction completed");
 		},
 
 		update(updater: (value: T) => T) {
