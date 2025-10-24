@@ -2,25 +2,33 @@
 
 /**
  * Simple Y.js WebSocket server for development
- * 
+ *
  * Usage:
- *   node server/websocket.js [port]
+ *   tsx server/websocket.ts [port]
  *   npm run server
- * 
+ *
  * Environment variables:
  *   PORT - Server port (default: 1234)
  *   HOST - Server host (default: localhost)
  */
 
-import * as http from 'http';
-import * as map from 'lib0/map';
-import { WebSocketServer } from 'ws';
+import * as http from "node:http";
+import * as map from "lib0/map";
+import type { IncomingMessage } from "node:http";
+import { WebSocket, WebSocketServer } from "ws";
 
-const PORT = process.env.PORT || 1234;
-const HOST = process.env.HOST || 'localhost';
+const PORT = Number(process.env.PORT) || 1234;
+const HOST = process.env.HOST || "localhost";
+
+interface DocRoom {
+	name: string;
+	connections: Map<string, WebSocket>;
+	created: number;
+	lastActivity: number;
+}
 
 // Store for active documents
-const docs = new Map();
+const docs = new Map<string, DocRoom>();
 
 // Garbage collection interval for inactive rooms
 const GC_INTERVAL = 30000; // 30 seconds
@@ -28,13 +36,13 @@ const GC_INTERVAL = 30000; // 30 seconds
 /**
  * Get or create a document room
  */
-function getDoc(docName) {
+function getDoc(docName: string): DocRoom {
 	return map.setIfUndefined(docs, docName, () => {
-		const doc = {
+		const doc: DocRoom = {
 			name: docName,
 			connections: new Map(),
 			created: Date.now(),
-			lastActivity: Date.now()
+			lastActivity: Date.now(),
 		};
 		console.log(`📄 Created room: ${docName}`);
 		return doc;
@@ -44,7 +52,7 @@ function getDoc(docName) {
 /**
  * Clean up inactive rooms
  */
-function garbageCollect() {
+function garbageCollect(): void {
 	const now = Date.now();
 	const timeout = 5 * 60 * 1000; // 5 minutes
 
@@ -57,26 +65,29 @@ function garbageCollect() {
 }
 
 // Create HTTP server
-const server = http.createServer((req, res) => {
-	if (req.url === '/health') {
-		res.writeHead(200, { 'Content-Type': 'application/json' });
-		res.end(JSON.stringify({
-			status: 'ok',
-			rooms: docs.size,
-			uptime: process.uptime()
-		}));
-	} else if (req.url === '/rooms') {
-		res.writeHead(200, { 'Content-Type': 'application/json' });
-		const rooms = Array.from(docs.entries()).map(([name, doc]) => ({
-			name,
-			connections: doc.connections.size,
-			created: doc.created,
-			lastActivity: doc.lastActivity
-		}));
-		res.end(JSON.stringify({ rooms }));
-	} else {
-		res.writeHead(200, { 'Content-Type': 'text/html' });
-		res.end(`
+const server = http.createServer(
+	(req: IncomingMessage, res: http.ServerResponse) => {
+		if (req.url === "/health") {
+			res.writeHead(200, { "Content-Type": "application/json" });
+			res.end(
+				JSON.stringify({
+					status: "ok",
+					rooms: docs.size,
+					uptime: process.uptime(),
+				}),
+			);
+		} else if (req.url === "/rooms") {
+			res.writeHead(200, { "Content-Type": "application/json" });
+			const rooms = Array.from(docs.entries()).map(([name, doc]) => ({
+				name,
+				connections: doc.connections.size,
+				created: doc.created,
+				lastActivity: doc.lastActivity,
+			}));
+			res.end(JSON.stringify({ rooms }));
+		} else {
+			res.writeHead(200, { "Content-Type": "text/html" });
+			res.end(`
 <!DOCTYPE html>
 <html>
 <head>
@@ -129,47 +140,53 @@ const store = collabWritable({ count: 0 }, {
 </body>
 </html>
 		`);
-	}
-});
+		}
+	},
+);
 
 // Create WebSocket server
 const wss = new WebSocketServer({ server });
 
-wss.on('connection', (ws, req) => {
+wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
 	// Parse room name from URL
-	const url = new URL(req.url, `http://${req.headers.host}`);
-	const roomName = url.searchParams.get('room') || url.pathname.slice(1) || 'default';
-	
+	const url = new URL(req.url || "/", `http://${req.headers.host}`);
+	const roomName =
+		url.searchParams.get("room") || url.pathname.slice(1) || "default";
+
 	const doc = getDoc(roomName);
 	doc.lastActivity = Date.now();
 
 	const connId = Math.random().toString(36).slice(2, 11);
 	doc.connections.set(connId, ws);
 
-	console.log(`👤 Client connected to room: ${roomName} (${doc.connections.size} total)`);
+	console.log(
+		`👤 Client connected to room: ${roomName} (${doc.connections.size} total)`,
+	);
 
 	// Set up message handling
-	ws.on('message', (message) => {
+	ws.on("message", (message: Buffer) => {
 		doc.lastActivity = Date.now();
-		
+
 		// Broadcast to all other connections in the same room
 		doc.connections.forEach((conn, id) => {
-			if (id !== connId && conn.readyState === ws.OPEN) {
+			if (id !== connId && conn.readyState === WebSocket.OPEN) {
 				conn.send(message);
 			}
 		});
 	});
 
-	ws.on('close', () => {
+	ws.on("close", () => {
 		doc.connections.delete(connId);
-		console.log(`👋 Client disconnected from room: ${roomName} (${doc.connections.size} remaining)`);
-		
+		console.log(
+			`👋 Client disconnected from room: ${roomName} (${doc.connections.size} remaining)`,
+		);
+
 		if (doc.connections.size === 0) {
 			doc.lastActivity = Date.now();
 		}
 	});
 
-	ws.on('error', (error) => {
+	ws.on("error", (error: Error) => {
 		console.error(`❌ WebSocket error in room ${roomName}:`, error.message);
 	});
 });
@@ -184,8 +201,8 @@ server.listen(PORT, HOST, () => {
 ║                                                            ║
 ║  🚀 Y.js WebSocket Server Running                         ║
 ║                                                            ║
-║  WebSocket: ws://${HOST}:${PORT}                    ║
-║  HTTP:      http://${HOST}:${PORT}                  ║
+║  WebSocket: ws://${HOST}:${PORT.toString().padEnd(35)}║
+║  HTTP:      http://${HOST}:${PORT.toString().padEnd(35)}║
 ║                                                            ║
 ║  Ready for collaboration! 🎉                              ║
 ║                                                            ║
@@ -194,23 +211,16 @@ server.listen(PORT, HOST, () => {
 });
 
 // Graceful shutdown
-process.on('SIGINT', () => {
-	console.log('\n🛑 Shutting down server...');
+function shutdown(): void {
+	console.log("\n🛑 Shutting down server...");
 	wss.close(() => {
 		server.close(() => {
-			console.log('👋 Server stopped');
+			console.log("👋 Server stopped");
 			process.exit(0);
 		});
 	});
-});
+}
 
-process.on('SIGTERM', () => {
-	console.log('\n🛑 Shutting down server...');
-	wss.close(() => {
-		server.close(() => {
-			console.log('👋 Server stopped');
-			process.exit(0);
-		});
-	});
-});
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
