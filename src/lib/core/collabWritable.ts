@@ -244,17 +244,19 @@ export function collabWritable<T extends Record<string, unknown>>(
 							status: "connected",
 							lastConnected: new Date(),
 						});
-						
+
 						// Only initialize if the map is still empty after sync
 						// This prevents overwriting existing data from other clients
 						if (state.ymap.size === 0) {
-							logger.log("Y.Map is empty after sync, initializing with default values");
+							logger.log(
+								"Y.Map is empty after sync, initializing with default values",
+							);
 							initializeYMap();
 						} else {
 							logger.log("Y.Map has existing data after sync, loading it");
 							state.value = ymapToObject(state.ymap) as T;
 						}
-						
+
 						// Update value after sync with validation
 						const syncedValue = ymapToObject(state.ymap) as T;
 						if (isValidValue(syncedValue)) {
