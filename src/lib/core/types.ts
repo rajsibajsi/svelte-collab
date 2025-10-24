@@ -6,140 +6,140 @@ import type * as Y from "yjs";
  * Configuration options for collabWritable store
  */
 export interface CollabOptions {
-  /**
-   * Unique room/document identifier
-   */
-  room: string;
+	/**
+	 * Unique room/document identifier
+	 */
+	room: string;
 
-  /**
-   * WebSocket server URL (e.g., 'ws://localhost:1234')
-   * Optional - if not provided, only local state is maintained
-   */
-  serverUrl?: string;
+	/**
+	 * WebSocket server URL (e.g., 'ws://localhost:1234')
+	 * Optional - if not provided, only local state is maintained
+	 */
+	serverUrl?: string;
 
-  /**
-   * Enable IndexedDB persistence
-   * @default true
-   */
-  persist?: boolean;
+	/**
+	 * Enable IndexedDB persistence
+	 * @default true
+	 */
+	persist?: boolean;
 
-  /**
-   * User information for presence/awareness
-   */
-  user?: UserInfo;
+	/**
+	 * User information for presence/awareness
+	 */
+	user?: UserInfo;
 
-  /**
-   * Custom Y.Doc instance (advanced usage)
-   */
-  ydoc?: Y.Doc;
+	/**
+	 * Custom Y.Doc instance (advanced usage)
+	 */
+	ydoc?: Y.Doc;
 
-  /**
-   * Name of the Y.Map to use within the document
-   * @default 'state'
-   */
-  stateName?: string;
+	/**
+	 * Name of the Y.Map to use within the document
+	 * @default 'state'
+	 */
+	stateName?: string;
 
-  /**
-   * Connection timeout in milliseconds
-   * @default 5000
-   */
-  connectTimeout?: number;
+	/**
+	 * Connection timeout in milliseconds
+	 * @default 5000
+	 */
+	connectTimeout?: number;
 
-  /**
-   * Enable debug logging
-   * @default false
-   */
-  debug?: boolean;
+	/**
+	 * Enable debug logging
+	 * @default false
+	 */
+	debug?: boolean;
 }
 
 /**
  * User information for presence/awareness features
  */
 export interface UserInfo {
-  id?: string;
-  name: string;
-  color?: string;
-  avatar?: string;
-  [key: string]: any;
+	id?: string;
+	name: string;
+	color?: string;
+	avatar?: string;
+	[key: string]: unknown;
 }
 
 /**
  * Connection status states
  */
 export type ConnectionStatus =
-  | "disconnected"
-  | "connecting"
-  | "connected"
-  | "reconnecting"
-  | "error";
+	| "disconnected"
+	| "connecting"
+	| "connected"
+	| "reconnecting"
+	| "error";
 
 /**
  * Connection state information
  */
 export interface ConnectionState {
-  status: ConnectionStatus;
-  error?: Error;
-  retries?: number;
-  lastConnected?: Date;
+	status: ConnectionStatus;
+	error?: Error;
+	retries?: number;
+	lastConnected?: Date;
 }
 
 /**
  * Enhanced Svelte store with collaboration features
  */
 export interface CollabStore<T> {
-  subscribe: (run: (value: T) => void) => () => void;
-  set: (value: T) => void;
-  update: (updater: (value: T) => T) => void;
+	subscribe: (run: (value: T) => void) => () => void;
+	set: (value: T) => void;
+	update: (updater: (value: T) => T) => void;
 
-  /**
-   * Get the underlying Y.Doc
-   */
-  getDoc: () => Y.Doc;
+	/**
+	 * Get the underlying Y.Doc
+	 */
+	getDoc: () => Y.Doc;
 
-  /**
-   * Get the Y.Map instance
-   */
-  getYMap: () => Y.Map<any>;
+	/**
+	 * Get the Y.Map instance
+	 */
+	getYMap: () => Y.Map<unknown>;
 
-  /**
-   * Readable store for connection state
-   * Use with $connectionState in Svelte components
-   */
-  connectionState: {
-    subscribe: (run: (state: ConnectionState) => void) => () => void;
-  };
+	/**
+	 * Readable store for connection state
+	 * Use with $connectionState in Svelte components
+	 */
+	connectionState: {
+		subscribe: (run: (state: ConnectionState) => void) => () => void;
+	};
 
-  /**
-   * Manually connect/disconnect
-   */
-  connect: () => void;
-  disconnect: () => void;
+	/**
+	 * Manually connect/disconnect
+	 */
+	connect: () => void;
+	disconnect: () => void;
 
-  /**
-   * Destroy the store and clean up resources
-   */
-  destroy: () => void;
+	/**
+	 * Destroy the store and clean up resources
+	 */
+	destroy: () => void;
 }
 
 /**
  * Providers attached to a document
  */
 export interface CollabProviders {
-  websocket?: WebsocketProvider;
-  indexeddb?: IndexeddbPersistence;
+	websocket?: WebsocketProvider;
+	indexeddb?: IndexeddbPersistence;
 }
 
 /**
  * Internal store state
  */
 export interface StoreState<T> {
-  value: T;
-  ydoc: Y.Doc;
-  ymap: Y.Map<any>;
-  providers: CollabProviders;
-  connectionState: ConnectionState;
-  options: Required<CollabOptions>;
-  subscribers: Set<(value: T) => void>;
-  connectionSubscribers: Set<(state: ConnectionState) => void>;
-  destroyed: boolean;
+	value: T;
+	ydoc: Y.Doc;
+	ymap: Y.Map<unknown>;
+	providers: CollabProviders;
+	connectionState: ConnectionState;
+	options: Required<CollabOptions>;
+	subscribers: Set<(value: T) => void>;
+	connectionSubscribers: Set<(state: ConnectionState) => void>;
+	destroyed: boolean;
 }

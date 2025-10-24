@@ -2,17 +2,17 @@ import { IndexeddbPersistence } from "y-indexeddb";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 import type {
-  CollabOptions,
-  CollabStore,
-  ConnectionState,
-  StoreState,
+	CollabOptions,
+	CollabStore,
+	ConnectionState,
+	StoreState,
 } from "./types.js";
 import {
-  createLogger,
-  deepClone,
-  generateUserColor,
-  generateUserId,
-  ymapToObject,
+	createLogger,
+	deepClone,
+	generateUserColor,
+	generateUserId,
+	ymapToObject,
 } from "./utils.js";
 
 /**
@@ -29,314 +29,317 @@ import {
  * $store = { count: 1 };
  * ```
  */
+// biome-ignore lint/suspicious/noExplicitAny: Generic object store requires flexible typing
 export function collabWritable<T extends Record<string, any>>(
-  initialValue: T,
-  options: CollabOptions
+	initialValue: T,
+	options: CollabOptions,
 ): CollabStore<T> {
-  // Validate options
-  if (!options.room) {
-    throw new Error("collabWritable: room option is required");
-  }
+	// Validate options
+	if (!options.room) {
+		throw new Error("collabWritable: room option is required");
+	}
 
-  // Set defaults
-  const opts: Required<CollabOptions> = {
-    room: options.room,
-    serverUrl: options.serverUrl || "",
-    persist: options.persist !== false,
-    user: options.user || {
-      id: generateUserId(),
-      name: "Anonymous",
-      color: generateUserColor(),
-    },
-    ydoc: options.ydoc || new Y.Doc(),
-    stateName: options.stateName || "state",
-    connectTimeout: options.connectTimeout || 5000,
-    debug: options.debug || false,
-  };
+	// Set defaults
+	const opts: Required<CollabOptions> = {
+		room: options.room,
+		serverUrl: options.serverUrl || "",
+		persist: options.persist !== false,
+		user: options.user || {
+			id: generateUserId(),
+			name: "Anonymous",
+			color: generateUserColor(),
+		},
+		ydoc: options.ydoc || new Y.Doc(),
+		stateName: options.stateName || "state",
+		connectTimeout: options.connectTimeout || 5000,
+		debug: options.debug || false,
+	};
 
-  // Ensure user has an ID
-  if (!opts.user.id) {
-    opts.user.id = generateUserId();
-  }
+	// Ensure user has an ID
+	if (!opts.user.id) {
+		opts.user.id = generateUserId();
+	}
 
-  const logger = createLogger("collabWritable", opts.debug);
+	const logger = createLogger("collabWritable", opts.debug);
 
-  // Initialize state
-  const state: StoreState<T> = {
-    value: deepClone(initialValue),
-    ydoc: opts.ydoc,
-    ymap: opts.ydoc.getMap(opts.stateName),
-    providers: {},
-    connectionState: {
-      status: "disconnected",
-    },
-    options: opts,
-    subscribers: new Set(),
-    connectionSubscribers: new Set(),
-    destroyed: false,
-  };
+	// Initialize state
+	const state: StoreState<T> = {
+		value: deepClone(initialValue),
+		ydoc: opts.ydoc,
+		ymap: opts.ydoc.getMap(opts.stateName),
+		providers: {},
+		connectionState: {
+			status: "disconnected",
+		},
+		options: opts,
+		subscribers: new Set(),
+		connectionSubscribers: new Set(),
+		destroyed: false,
+	};
 
-  logger.log("Creating store for room:", opts.room);
+	logger.log("Creating store for room:", opts.room);
 
-  // Initialize Y.Map with initial value if empty
-  if (state.ymap.size === 0) {
-    logger.log("Initializing Y.Map with initial value");
-    state.ydoc.transact(() => {
-      Object.entries(initialValue).forEach(([key, value]) => {
-        state.ymap.set(key, value);
-      });
-    });
-  } else {
-    // Load existing value from Y.Map
-    logger.log("Loading existing value from Y.Map");
-    state.value = ymapToObject(state.ymap) as T;
-  }
+	// Initialize Y.Map with initial value if empty
+	if (state.ymap.size === 0) {
+		logger.log("Initializing Y.Map with initial value");
+		state.ydoc.transact(() => {
+			Object.entries(initialValue).forEach(([key, value]) => {
+				state.ymap.set(key, value);
+			});
+		});
+	} else {
+		// Load existing value from Y.Map
+		logger.log("Loading existing value from Y.Map");
+		state.value = ymapToObject(state.ymap) as T;
+	}
 
-  // Set up Y.Map observer to update Svelte state
-  const observer = () => {
-    if (state.destroyed) return;
+	// Set up Y.Map observer to update Svelte state
+	const observer = () => {
+		if (state.destroyed) return;
 
-    const newValue = ymapToObject(state.ymap) as T;
-    state.value = newValue;
+		const newValue = ymapToObject(state.ymap) as T;
+		state.value = newValue;
 
-    // Notify all subscribers
-    state.subscribers.forEach((subscriber) => {
-      try {
-        subscriber(deepClone(newValue));
-      } catch (error) {
-        logger.error("Error in subscriber:", error);
-      }
-    });
-  };
+		// Notify all subscribers
+		state.subscribers.forEach((subscriber) => {
+			try {
+				subscriber(deepClone(newValue));
+			} catch (error) {
+				logger.error("Error in subscriber:", error);
+			}
+		});
+	};
 
-  state.ymap.observe(observer);
+	state.ymap.observe(observer);
 
-  // Initialize providers
-  function initializeProviders() {
-    // IndexedDB persistence (browser only)
-    if (opts.persist && typeof indexedDB !== "undefined") {
-      try {
-        logger.log("Initializing IndexedDB persistence");
-        state.providers.indexeddb = new IndexeddbPersistence(
-          opts.room,
-          state.ydoc
-        );
+	// Initialize providers
+	function initializeProviders() {
+		// IndexedDB persistence (browser only)
+		if (opts.persist && typeof indexedDB !== "undefined") {
+			try {
+				logger.log("Initializing IndexedDB persistence");
+				state.providers.indexeddb = new IndexeddbPersistence(
+					opts.room,
+					state.ydoc,
+				);
 
-        state.providers.indexeddb.on("synced", () => {
-          logger.log("IndexedDB synced");
-          // Update value from persisted state
-          state.value = ymapToObject(state.ymap) as T;
-          state.subscribers.forEach((sub) => sub(deepClone(state.value)));
-        });
-      } catch (error) {
-        logger.error("Failed to initialize IndexedDB:", error);
-      }
-    }
+				state.providers.indexeddb.on("synced", () => {
+					logger.log("IndexedDB synced");
+					// Update value from persisted state
+					state.value = ymapToObject(state.ymap) as T;
+					state.subscribers.forEach((sub) => {
+						sub(deepClone(state.value));
+					});
+				});
+			} catch (error) {
+				logger.error("Failed to initialize IndexedDB:", error);
+			}
+		}
 
-    // WebSocket provider
-    if (opts.serverUrl) {
-      try {
-        logger.log("Connecting to WebSocket server:", opts.serverUrl);
-        updateConnectionState({ status: "connecting" });
+		// WebSocket provider
+		if (opts.serverUrl) {
+			try {
+				logger.log("Connecting to WebSocket server:", opts.serverUrl);
+				updateConnectionState({ status: "connecting" });
 
-        state.providers.websocket = new WebsocketProvider(
-          opts.serverUrl,
-          opts.room,
-          state.ydoc,
-          {
-            connect: true,
-          }
-        );
+				state.providers.websocket = new WebsocketProvider(
+					opts.serverUrl,
+					opts.room,
+					state.ydoc,
+					{
+						connect: true,
+					},
+				);
 
-        // Connection event handlers
-        state.providers.websocket.on("status", (event: { status: string }) => {
-          logger.log("WebSocket status event:", event);
+				// Connection event handlers
+				state.providers.websocket.on("status", (event: { status: string }) => {
+					logger.log("WebSocket status event:", event);
 
-          if (event.status === "connected") {
-            updateConnectionState({
-              status: "connected",
-              lastConnected: new Date(),
-            });
-          } else if (event.status === "disconnected") {
-            updateConnectionState({ status: "disconnected" });
-          } else if (event.status === "connecting") {
-            updateConnectionState({ status: "connecting" });
-          }
-        });
+					if (event.status === "connected") {
+						updateConnectionState({
+							status: "connected",
+							lastConnected: new Date(),
+						});
+					} else if (event.status === "disconnected") {
+						updateConnectionState({ status: "disconnected" });
+					} else if (event.status === "connecting") {
+						updateConnectionState({ status: "connecting" });
+					}
+				});
 
-        state.providers.websocket.on("sync", (isSynced: boolean) => {
-          logger.log("WebSocket sync:", isSynced);
-          if (isSynced) {
-            // Update connection state when synced
-            updateConnectionState({
-              status: "connected",
-              lastConnected: new Date(),
-            });
-            // Update value after sync
-            state.value = ymapToObject(state.ymap) as T;
-            state.subscribers.forEach((sub) => sub(deepClone(state.value)));
-          }
-        });
+				state.providers.websocket.on("sync", (isSynced: boolean) => {
+					logger.log("WebSocket sync:", isSynced);
+					if (isSynced) {
+						// Update connection state when synced
+						updateConnectionState({
+							status: "connected",
+							lastConnected: new Date(),
+						});
+						// Update value after sync
+						state.value = ymapToObject(state.ymap) as T;
+						state.subscribers.forEach((sub) => {
+							sub(deepClone(state.value));
+						});
+					}
+				});
 
-        state.providers.websocket.on("connection-error", (event: any) => {
-          logger.error("WebSocket connection error:", event);
-          updateConnectionState({
-            status: "error",
-            error:
-              event instanceof Error ? event : new Error("Connection error"),
-          });
-        });
-      } catch (error) {
-        logger.error("Failed to initialize WebSocket provider:", error);
-        updateConnectionState({
-          status: "error",
-          error: error as Error,
-        });
-      }
-    }
-  }
+				// biome-ignore lint/suspicious/noExplicitAny: WebSocket error event type is not well-defined
+				state.providers.websocket.on("connection-error", (event: any) => {
+					logger.error("WebSocket connection error:", event);
+					updateConnectionState({
+						status: "error",
+						error:
+							event instanceof Error ? event : new Error("Connection error"),
+					});
+				});
+			} catch (error) {
+				logger.error("Failed to initialize WebSocket provider:", error);
+				updateConnectionState({
+					status: "error",
+					error: error as Error,
+				});
+			}
+		}
+	}
 
-  // Helper to update connection state
-  function updateConnectionState(update: Partial<ConnectionState>) {
-    state.connectionState = { ...state.connectionState, ...update };
-    logger.log("Connection state updated:", state.connectionState);
+	// Helper to update connection state
+	function updateConnectionState(update: Partial<ConnectionState>) {
+		state.connectionState = { ...state.connectionState, ...update };
+		logger.log("Connection state updated:", state.connectionState);
 
-    // Notify all connection subscribers
-    state.connectionSubscribers.forEach((subscriber) => {
-      try {
-        subscriber({ ...state.connectionState });
-      } catch (error) {
-        logger.error("Error in connection subscriber:", error);
-      }
-    });
-  }
+		// Notify all connection subscribers
+		state.connectionSubscribers.forEach((subscriber) => {
+			try {
+				subscriber({ ...state.connectionState });
+			} catch (error) {
+				logger.error("Error in connection subscriber:", error);
+			}
+		});
+	}
 
-  // Start providers
-  initializeProviders();
+	// Start providers
+	initializeProviders();
 
-  // Store interface
-  const store: CollabStore<T> = {
-    subscribe(run: (value: T) => void) {
-      // Immediately call with current value
-      run(deepClone(state.value));
+	// Store interface
+	const store: CollabStore<T> = {
+		subscribe(run: (value: T) => void) {
+			// Immediately call with current value
+			run(deepClone(state.value));
 
-      // Add to subscribers
-      state.subscribers.add(run);
+			// Add to subscribers
+			state.subscribers.add(run);
 
-      // Return unsubscribe function
-      return () => {
-        state.subscribers.delete(run);
-      };
-    },
+			// Return unsubscribe function
+			return () => {
+				state.subscribers.delete(run);
+			};
+		},
 
-    // Connection state as a readable store
-    connectionState: {
-      subscribe(run: (connectionState: ConnectionState) => void) {
-        // Immediately call with current state
-        run({ ...state.connectionState });
-        
-        // Add to subscribers
-        state.connectionSubscribers.add(run);
-        
-        // Return unsubscribe function
-        return () => {
-          state.connectionSubscribers.delete(run);
-        };
-      },
-    },
+		// Connection state as a readable store
+		connectionState: {
+			subscribe(run: (connectionState: ConnectionState) => void) {
+				// Immediately call with current state
+				run({ ...state.connectionState });
 
-    set(value: T) {
-      if (state.destroyed) {
-        if (opts.debug) {
-          logger.warn("Cannot set value on destroyed store");
-        }
-        return;
-      }
+				// Add to subscribers
+				state.connectionSubscribers.add(run);
 
-      logger.log("Setting value:", value);
+				// Return unsubscribe function
+				return () => {
+					state.connectionSubscribers.delete(run);
+				};
+			},
+		},
 
-      state.ydoc.transact(() => {
-        // Clear existing keys
-        const existingKeys = Array.from(state.ymap.keys());
-        existingKeys.forEach((key) => {
-          if (!(key in value)) {
-            state.ymap.delete(key);
-          }
-        });
+		set(value: T) {
+			if (state.destroyed) {
+				if (opts.debug) {
+					logger.warn("Cannot set value on destroyed store");
+				}
+				return;
+			}
 
-        // Set new values
-        Object.entries(value).forEach(([key, val]) => {
-          state.ymap.set(key, val);
-        });
-      });
-    },
+			logger.log("Setting value:", value);
 
-    update(updater: (value: T) => T) {
-      if (state.destroyed) {
-        if (opts.debug) {
-          logger.warn("Cannot update value on destroyed store");
-        }
-        return;
-      }
+			state.ydoc.transact(() => {
+				// Clear existing keys
+				const existingKeys = Array.from(state.ymap.keys());
+				existingKeys.forEach((key) => {
+					if (!(key in value)) {
+						state.ymap.delete(key);
+					}
+				});
 
-      const currentValue = deepClone(state.value);
-      const newValue = updater(currentValue);
-      store.set(newValue);
-    },
+				// Set new values
+				Object.entries(value).forEach(([key, val]) => {
+					state.ymap.set(key, val);
+				});
+			});
+		},
 
-    getDoc() {
-      return state.ydoc;
-    },
+		update(updater: (value: T) => T) {
+			if (state.destroyed) {
+				if (opts.debug) {
+					logger.warn("Cannot update value on destroyed store");
+				}
+				return;
+			}
 
-    getYMap() {
-      return state.ymap;
-    },
+			const currentValue = deepClone(state.value);
+			const newValue = updater(currentValue);
+			store.set(newValue);
+		},
 
-    connect() {
-      if (
-        state.providers.websocket &&
-        !state.providers.websocket.shouldConnect
-      ) {
-        logger.log("Connecting WebSocket provider");
-        state.providers.websocket.connect();
-      }
-    },
+		getDoc() {
+			return state.ydoc;
+		},
 
-    disconnect() {
-      if (
-        state.providers.websocket &&
-        state.providers.websocket.shouldConnect
-      ) {
-        logger.log("Disconnecting WebSocket provider");
-        state.providers.websocket.disconnect();
-        updateConnectionState({ status: "disconnected" });
-      }
-    },
+		getYMap() {
+			return state.ymap;
+		},
 
-    destroy() {
-      if (state.destroyed) return;
+		connect() {
+			if (
+				state.providers.websocket &&
+				!state.providers.websocket.shouldConnect
+			) {
+				logger.log("Connecting WebSocket provider");
+				state.providers.websocket.connect();
+			}
+		},
 
-      logger.log("Destroying store");
-      state.destroyed = true;
+		disconnect() {
+			if (state.providers.websocket?.shouldConnect) {
+				logger.log("Disconnecting WebSocket provider");
+				state.providers.websocket.disconnect();
+				updateConnectionState({ status: "disconnected" });
+			}
+		},
 
-      // Unobserve Y.Map
-      state.ymap.unobserve(observer);
+		destroy() {
+			if (state.destroyed) return;
 
-      // Destroy providers
-      if (state.providers.websocket) {
-        state.providers.websocket.destroy();
-      }
-      if (state.providers.indexeddb) {
-        state.providers.indexeddb.destroy();
-      }
+			logger.log("Destroying store");
+			state.destroyed = true;
 
-      // Clear subscribers
-      state.subscribers.clear();
-      state.connectionSubscribers.clear();
+			// Unobserve Y.Map
+			state.ymap.unobserve(observer);
 
-      logger.log("Store destroyed");
-    },
-  };
+			// Destroy providers
+			if (state.providers.websocket) {
+				state.providers.websocket.destroy();
+			}
+			if (state.providers.indexeddb) {
+				state.providers.indexeddb.destroy();
+			}
 
-  return store;
+			// Clear subscribers
+			state.subscribers.clear();
+			state.connectionSubscribers.clear();
+
+			logger.log("Store destroyed");
+		},
+	};
+
+	return store;
 }

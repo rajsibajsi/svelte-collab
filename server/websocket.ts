@@ -12,9 +12,9 @@
  *   HOST - Server host (default: localhost)
  */
 
+import type { IncomingMessage } from "node:http";
 import * as http from "node:http";
 import * as map from "lib0/map";
-import type { IncomingMessage } from "node:http";
 import { WebSocket, WebSocketServer } from "ws";
 
 const PORT = Number(process.env.PORT) || 1234;
@@ -223,4 +223,3 @@ function shutdown(): void {
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
-

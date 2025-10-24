@@ -1,86 +1,98 @@
 <script lang="ts">
-	import { collabWritable } from '$lib/index.js';
-	import { onDestroy } from 'svelte';
+import { onDestroy } from "svelte";
+import { collabWritable } from "$lib/index.js";
 
-	// Create a collaborative store
-	const store = collabWritable(
-		{ 
-			count: 0, 
-			message: 'Hello, collaborative world!',
-			items: [] as string[]
+// Create a collaborative store
+const store = collabWritable(
+	{
+		count: 0,
+		message: "Hello, collaborative world!",
+		items: [] as string[],
+	},
+	{
+		room: "demo-room",
+		serverUrl: "ws://localhost:1234",
+		persist: true,
+		debug: true,
+		user: {
+			name: `User-${Math.floor(Math.random() * 1000)}`,
+			color: `hsl(${Math.random() * 360}, 70%, 60%)`,
 		},
-		{
-			room: 'demo-room',
-			serverUrl: 'ws://localhost:1234',
-			persist: true,
-			debug: true,
-			user: {
-				name: `User-${Math.floor(Math.random() * 1000)}`,
-				color: `hsl(${Math.random() * 360}, 70%, 60%)`
-			}
-		}
-	);
+	},
+);
 
-	let newItem = $state('');
-	
-	// Extract connection state store for easier access
-	const { connectionState } = store;
+let newItem = $state("");
 
-	function increment() {
-		store.update(state => ({
-			...state,
-			count: state.count + 1
-		}));
-	}
+// Extract connection state store for easier access
+// biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template via $connectionState
+const { connectionState } = store;
 
-	function decrement() {
-		store.update(state => ({
-			...state,
-			count: state.count - 1
-		}));
-	}
+// biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
+function increment() {
+	store.update((state) => ({
+		...state,
+		count: state.count + 1,
+	}));
+}
 
-	function addItem() {
-		if (!newItem.trim()) return;
-		
-		store.update(state => ({
-			...state,
-			items: [...state.items, newItem.trim()]
-		}));
-		
-		newItem = '';
-	}
+// biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
+function decrement() {
+	store.update((state) => ({
+		...state,
+		count: state.count - 1,
+	}));
+}
 
-	function removeItem(index: number) {
-		store.update(state => ({
-			...state,
-			items: state.items.filter((_, i) => i !== index)
-		}));
-	}
+// biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
+function addItem() {
+	if (!newItem.trim()) return;
 
-	function clearAll() {
-		store.set({
-			count: 0,
-			message: 'Hello, collaborative world!',
-			items: []
-		});
-	}
+	store.update((state) => ({
+		...state,
+		items: [...state.items, newItem.trim()],
+	}));
 
-	// Cleanup on destroy
-	onDestroy(() => {
-		store.destroy();
+	newItem = "";
+}
+
+// biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
+function removeItem(index: number) {
+	store.update((state) => ({
+		...state,
+		items: state.items.filter((_, i) => i !== index),
+	}));
+}
+
+// biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
+function clearAll() {
+	store.set({
+		count: 0,
+		message: "Hello, collaborative world!",
+		items: [],
 	});
+}
 
-	// Connection status color
-	const statusColor = $derived.by(() => {
-		switch ($connectionState.status) {
-			case 'connected': return 'bg-green-500';
-			case 'connecting': return 'bg-yellow-500';
-			case 'disconnected': return 'bg-gray-500';
-			case 'error': return 'bg-red-500';
-			default: return 'bg-gray-500';
-		}
-	});
+// Cleanup on destroy
+onDestroy(() => {
+	store.destroy();
+});
+
+// Connection status color
+// biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
+const statusColor = $derived.by(() => {
+	switch ($connectionState.status) {
+		case "connected":
+			return "bg-green-500";
+		case "connecting":
+			return "bg-yellow-500";
+		case "disconnected":
+			return "bg-gray-500";
+		case "error":
+			return "bg-red-500";
+		default:
+			return "bg-gray-500";
+	}
+});
 </script>
 
 <div class="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-8">
