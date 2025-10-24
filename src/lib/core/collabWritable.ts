@@ -133,12 +133,15 @@ export function collabWritable<T extends Record<string, unknown>>(
 				}
 			});
 		} else {
-			logger.warn("Invalid value from Y.Map observer, keeping current value:", newValue);
+			logger.warn(
+				"Invalid value from Y.Map observer, keeping current value:",
+				newValue,
+			);
 		}
 	};
 
 	state.ymap.observe(observer);
-	
+
 	// Also observe the Y.Doc for changes
 	state.ydoc.on("update", () => {
 		logger.log("Y.Doc update event triggered");
@@ -341,7 +344,7 @@ export function collabWritable<T extends Record<string, unknown>>(
 					state.ymap.set(key, val);
 				});
 			});
-			
+
 			logger.log("Y.js transaction completed");
 		},
 

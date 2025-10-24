@@ -22,16 +22,29 @@ const store = collabWritable(
 );
 
 let newItem = $state("");
+let message = $state("");
 
 // Extract connection state store for easier access
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template via $connectionState
 const { connectionState } = store;
 
+// Update message when store changes
+$effect(() => {
+	message = $store.message || "";
+});
+
+// Update store when message changes
+$effect(() => {
+	if (message !== ($store.message || "")) {
+		store.update(s => ({ ...s, message }));
+	}
+});
+
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
 function increment() {
 	store.update((state) => ({
 		...state,
-		count: state.count + 1,
+		count: (state.count ?? 0) + 1,
 	}));
 }
 
@@ -39,7 +52,7 @@ function increment() {
 function decrement() {
 	store.update((state) => ({
 		...state,
-		count: state.count - 1,
+		count: (state.count ?? 0) - 1,
 	}));
 }
 
@@ -49,7 +62,7 @@ function addItem() {
 
 	store.update((state) => ({
 		...state,
-		items: [...state.items, newItem.trim()],
+		items: [...(state.items ?? []), newItem.trim()],
 	}));
 
 	newItem = "";
@@ -59,7 +72,7 @@ function addItem() {
 function removeItem(index: number) {
 	store.update((state) => ({
 		...state,
-		items: state.items.filter((_, i) => i !== index),
+		items: (state.items ?? []).filter((_, i) => i !== index),
 	}));
 }
 
@@ -137,7 +150,7 @@ const statusColor = $derived.by(() => {
 					</button>
 					
 					<div class="text-6xl font-bold text-purple-600 min-w-[120px] text-center">
-						{$store.count}
+						{$store.count ?? 0}
 					</div>
 					
 					<button
@@ -161,8 +174,7 @@ const statusColor = $derived.by(() => {
 				
 				<input
 					type="text"
-					bind:value={$store.message}
-					onchange={(e) => store.update(s => ({ ...s, message: e.currentTarget.value }))}
+					bind:value={message}
 					class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-lg"
 					placeholder="Type a message..."
 				/>
@@ -195,7 +207,7 @@ const statusColor = $derived.by(() => {
 				</button>
 			</div>
 			
-			{#if $store.items.length > 0}
+			{#if $store.items && $store.items.length > 0}
 				<ul class="space-y-2">
 					{#each $store.items as item, index}
 						<li class="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
