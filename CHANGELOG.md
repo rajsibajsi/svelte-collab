@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### 🔧 Improvements
+
+#### Code Quality & Best Practices (2025-10-24)
+
+**Fixed All Linting Issues**
+- Replaced `any` with `unknown` in public interfaces for better type safety
+- Added justified `biome-ignore` comments for legitimate `any` usage
+- Migrated from `instanceof Array` to `Array.isArray()` for cross-context compatibility
+- Replaced `hasOwnProperty()` with `Object.hasOwn()` for safer property checks
+- Used optional chaining (`?.`) for cleaner null checks
+- Fixed forEach callbacks to avoid implicit returns
+
+**Idiomatic Svelte Patterns**
+- Refactored connection state to proper readable store pattern
+- Connection state now reactive with `$connectionState` syntax
+- Removed manual subscription/unsubscription boilerplate
+- Better alignment with Svelte store conventions
+
+**Server Improvements**
+- Migrated WebSocket server from JavaScript to TypeScript
+- Added proper type definitions for server components
+- Fixed module resolution issues with `lib0` package
+- Improved graceful shutdown handling
+
+**Developer Experience**
+- Integrated Biome for fast linting and formatting
+- Auto-organized imports (Svelte conventions)
+- Consistent code style with double quotes and proper indentation
+- All 38 tests passing with 0 linting errors
+
+### 🐛 Bug Fixes
+
+- Fixed connection state stuck in "connecting" status
+- Fixed browser tabs not reflecting connected state after sync
+- Added connection state update on WebSocket "sync" event
+- Resolved IndexedDB persistence triggering connection updates
+
+---
+
 ## [0.0.1] - 2025-10-24 - Phase 1 Complete ✅
 
 ### 🎉 Initial Release - MVP
@@ -49,7 +90,7 @@ svelte-collab/
 │   └── routes/
 │       └── +page.svelte             # Demo application
 ├── server/
-│   └── websocket.js                 # WebSocket server
+│   └── websocket.ts                 # WebSocket server (TypeScript)
 ├── README.md                        # Documentation
 ├── PROJECT_SPEC.md                  # Project specification
 ├── QUICKSTART.md                    # Quick start guide
@@ -70,6 +111,11 @@ svelte-collab/
 - `y-websocket@^3.0.0` - WebSocket provider
 - `y-indexeddb@^9.0.12` - IndexedDB persistence
 - `y-protocols@^1.0.6` - Y.js protocols
+- `lib0@^0.2.114` - Y.js utilities
+
+#### Dev Dependencies
+- `@biomejs/biome@^2.3.0` - Fast linter and formatter
+- `tsx@^4.20.6` - TypeScript execution for server
 
 #### API Surface
 - `collabWritable()` - Create collaborative store

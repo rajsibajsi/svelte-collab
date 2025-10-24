@@ -98,7 +98,7 @@ svelte-collab/
 │   └── routes/
 │       └── +page.svelte               (218 lines)
 ├── server/
-│   └── websocket.js                   (174 lines)
+│   └── websocket.ts                   (180 lines)
 ├── README.md                          (450 lines)
 ├── PROJECT_SPEC.md                    (450 lines)
 ├── QUICKSTART.md                      (200 lines)
@@ -210,16 +210,34 @@ Visit http://localhost:5173 in multiple browser tabs and watch the magic happen!
    - **Problem**: WebSocket error event vs Error type
    - **Solution**: Type cast and error wrapping
 
+5. **Connection State Reactivity**
+   - **Problem**: Manual subscription pattern not idiomatic Svelte
+   - **Solution**: Refactored to proper readable store pattern with `$connectionState`
+
+6. **Browser Connection State Stuck**
+   - **Problem**: Connection status remained "connecting" despite successful sync
+   - **Solution**: Updated connection state on WebSocket "sync" event
+
+7. **Module Resolution for Server**
+   - **Problem**: `ERR_MODULE_NOT_FOUND` for lib0 package
+   - **Solution**: Installed `lib0` as dependency and migrated server to TypeScript
+
+8. **Code Quality Issues**
+   - **Problem**: 50+ linting warnings and errors
+   - **Solution**: Replaced `any` with `unknown`, used `Array.isArray()`, `Object.hasOwn()`, optional chaining
+
 ---
 
 ## 📈 Project Health
 
 ### Code Quality
-- ✅ No linter errors
+- ✅ No linter errors (Biome)
 - ✅ No TypeScript errors
-- ✅ All tests passing
-- ✅ Consistent code style
+- ✅ All tests passing (38/38)
+- ✅ Consistent code style (auto-formatted)
 - ✅ Comprehensive error handling
+- ✅ Modern best practices (Array.isArray, Object.hasOwn, optional chaining)
+- ✅ Type safety with `unknown` instead of loose `any`
 
 ### Documentation Quality
 - ✅ API fully documented
@@ -234,6 +252,8 @@ Visit http://localhost:5173 in multiple browser tabs and watch the magic happen!
 - ✅ Great TypeScript support
 - ✅ Helpful debug mode
 - ✅ Clear error messages
+- ✅ Idiomatic Svelte patterns (readable stores)
+- ✅ Biome for fast linting and formatting
 
 ---
 

@@ -193,7 +193,7 @@ npm run server
 Or run it directly:
 
 ```bash
-node server/websocket.js
+npx tsx server/websocket.ts
 ```
 
 ### Environment Variables
@@ -212,7 +212,7 @@ node server/websocket.js
 
 For production, you can:
 
-1. **Use the included server** - Deploy `server/websocket.js` to your hosting platform
+1. **Use the included server** - Deploy `server/websocket.ts` to your hosting platform
 2. **Use y-websocket server** - `npx y-websocket`
 3. **Custom server** - Build your own using the `y-websocket` package
 
@@ -224,7 +224,8 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm && pnpm install
 COPY server ./server
-CMD ["node", "server/websocket.js"]
+RUN pnpm add -g tsx
+CMD ["tsx", "server/websocket.ts"]
 ```
 
 ## 🧪 Testing
@@ -238,6 +239,24 @@ npm run test:unit
 
 # Run type checking
 npm run check
+```
+
+## 🔧 Code Quality
+
+This project uses [Biome](https://biomejs.dev/) for fast linting and formatting:
+
+```bash
+# Check code quality (linting + formatting)
+npm run biome:check
+
+# Auto-fix issues
+npm run biome
+
+# Format only
+npm run format
+
+# Lint only
+npm run lint
 ```
 
 ## 🏗️ How It Works
