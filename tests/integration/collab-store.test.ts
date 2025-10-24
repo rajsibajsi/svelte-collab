@@ -1,8 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { spawn, ChildProcess } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { collabWritable } from "../../src/lib/core/collabWritable.js";
 import type { CollabStore } from "../../src/lib/core/types.js";
+
+// Mock WebSocket for Node.js environment
+if (typeof globalThis.WebSocket === "undefined") {
+	// biome-ignore lint/suspicious/noExplicitAny: Mock WebSocket for Node.js environment
+	globalThis.WebSocket = class WebSocket {} as any;
+}
 
 describe("CollabWritable Integration", () => {
 	let serverProcess: ChildProcess | null = null;
@@ -29,7 +35,7 @@ describe("CollabWritable Integration", () => {
 
 	it("should connect to WebSocket server and sync data", async () => {
 		const initialData = { count: 0, message: "Hello World" };
-		
+
 		// biome-ignore lint/suspicious/noExplicitAny: Test store needs flexible typing
 		const store: CollabStore<any> = collabWritable(initialData, {
 			room: "integration-test-room",
@@ -57,7 +63,7 @@ describe("CollabWritable Integration", () => {
 
 	it("should sync data between multiple stores", async () => {
 		const roomName = "multi-store-sync-test";
-		
+
 		// Create two stores
 		// biome-ignore lint/suspicious/noExplicitAny: Test stores need flexible typing
 		const store1: CollabStore<any> = collabWritable(
@@ -68,7 +74,7 @@ describe("CollabWritable Integration", () => {
 				debug: true,
 			},
 		);
-		
+
 		// biome-ignore lint/suspicious/noExplicitAny: Test stores need flexible typing
 		const store2: CollabStore<any> = collabWritable(
 			{ count: 0, message: "Store 2" },
@@ -81,6 +87,7 @@ describe("CollabWritable Integration", () => {
 
 		// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
 		let store1Value: any;
+		// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
 		let store2Value: any;
 
 		const unsubscribe1 = store1.subscribe((value) => {
@@ -283,6 +290,7 @@ describe("CollabWritable Integration", () => {
 
 		// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
 		let currentValue: any;
+		// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
 		let connectionState: any;
 
 		const unsubscribe = store.subscribe((value) => {

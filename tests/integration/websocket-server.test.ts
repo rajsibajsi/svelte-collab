@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { WebSocket } from "ws";
-import { spawn, ChildProcess } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 describe("WebSocket Server Integration", () => {
@@ -49,7 +49,10 @@ describe("WebSocket Server Integration", () => {
 						new Promise<void>((resolve, reject) => {
 							ws.on("open", () => resolve());
 							ws.on("error", reject);
-							global.setTimeout(() => reject(new Error("Connection timeout")), 5000);
+							global.setTimeout(
+								() => reject(new Error("Connection timeout")),
+								5000,
+							);
 						}),
 				),
 			);
@@ -99,14 +102,19 @@ describe("WebSocket Server Integration", () => {
 			});
 
 			// Send message from client1
-			const testMessage = JSON.stringify({ type: "test", data: "Hello from client1" });
+			const testMessage = JSON.stringify({
+				type: "test",
+				data: "Hello from client1",
+			});
 			client1.send(testMessage);
 
 			// Wait for message propagation
 			await sleep(100);
 
 			// Client2 should receive the message
-			expect(messages.some((msg) => msg.includes("Hello from client1"))).toBe(true);
+			expect(messages.some((msg) => msg.includes("Hello from client1"))).toBe(
+				true,
+			);
 		} finally {
 			clients.forEach((ws) => {
 				if (ws.readyState === WebSocket.OPEN) {

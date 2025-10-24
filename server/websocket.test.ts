@@ -12,7 +12,9 @@ vi.mock("ws", () => ({
 }));
 
 describe("WebSocket Server", () => {
+	// biome-ignore lint/suspicious/noExplicitAny: Mock server variables need flexible typing
 	let mockServer: any;
+	// biome-ignore lint/suspicious/noExplicitAny: Mock server variables need flexible typing
 	let mockWss: any;
 
 	beforeEach(() => {
@@ -191,7 +193,7 @@ describe("WebSocket Server", () => {
 
 	it("should handle concurrent connections to the same room", () => {
 		// Test concurrent connections
-		const roomName = "concurrent-test-room";
+		const _roomName = "concurrent-test-room";
 		const connections = new Map();
 
 		// Add multiple connections to the same room
