@@ -21,8 +21,13 @@
 		}
 	);
 
-	let connectionState = $derived(store.getConnectionState());
+	let connectionState = $state(store.getConnectionState());
 	let newItem = $state('');
+
+	// Subscribe to connection state changes
+	const unsubscribeConnection = store.subscribeConnection((state) => {
+		connectionState = state;
+	});
 
 	function increment() {
 		store.update(state => ({
@@ -66,6 +71,7 @@
 
 	// Cleanup on destroy
 	onDestroy(() => {
+		unsubscribeConnection();
 		store.destroy();
 	});
 

@@ -72,6 +72,7 @@ export function collabWritable<T extends Record<string, any>>(
     },
     options: opts,
     subscribers: new Set(),
+    connectionSubscribers: new Set(),
     destroyed: false,
   };
 
@@ -150,16 +151,18 @@ export function collabWritable<T extends Record<string, any>>(
         // Connection event handlers
         state.providers.websocket.on(
           "status",
-          ({ status }: { status: string }) => {
-            logger.log("WebSocket status:", status);
+          (event: { status: string }) => {
+            logger.log("WebSocket status event:", event);
 
-            if (status === "connected") {
+            if (event.status === "connected") {
               updateConnectionState({
                 status: "connected",
                 lastConnected: new Date(),
               });
-            } else if (status === "disconnected") {
+            } else if (event.status === "disconnected") {
               updateConnectionState({ status: "disconnected" });
+            } else if (event.status === "connecting") {
+              updateConnectionState({ status: "connecting" });
             }
           }
         );
@@ -167,6 +170,11 @@ export function collabWritable<T extends Record<string, any>>(
         state.providers.websocket.on("sync", (isSynced: boolean) => {
           logger.log("WebSocket sync:", isSynced);
           if (isSynced) {
+            // Update connection state when synced
+            updateConnectionState({
+              status: "connected",
+              lastConnected: new Date(),
+            });
             // Update value after sync
             state.value = ymapToObject(state.ymap) as T;
             state.subscribers.forEach((sub) => sub(deepClone(state.value)));
@@ -195,6 +203,15 @@ export function collabWritable<T extends Record<string, any>>(
   function updateConnectionState(update: Partial<ConnectionState>) {
     state.connectionState = { ...state.connectionState, ...update };
     logger.log("Connection state updated:", state.connectionState);
+    
+    // Notify all connection subscribers
+    state.connectionSubscribers.forEach((subscriber) => {
+      try {
+        subscriber({ ...state.connectionState });
+      } catch (error) {
+        logger.error("Error in connection subscriber:", error);
+      }
+    });
   }
 
   // Start providers
@@ -266,6 +283,19 @@ export function collabWritable<T extends Record<string, any>>(
       return { ...state.connectionState };
     },
 
+    subscribeConnection(run: (state: ConnectionState) => void) {
+      // Immediately call with current state
+      run({ ...state.connectionState });
+      
+      // Add to subscribers
+      state.connectionSubscribers.add(run);
+      
+      // Return unsubscribe function
+      return () => {
+        state.connectionSubscribers.delete(run);
+      };
+    },
+
     connect() {
       if (
         state.providers.websocket &&
@@ -306,6 +336,7 @@ export function collabWritable<T extends Record<string, any>>(
 
       // Clear subscribers
       state.subscribers.clear();
+      state.connectionSubscribers.clear();
 
       logger.log("Store destroyed");
     },

@@ -107,6 +107,11 @@ export interface CollabStore<T> {
   getConnectionState: () => ConnectionState;
 
   /**
+   * Subscribe to connection state changes
+   */
+  subscribeConnection: (run: (state: ConnectionState) => void) => () => void;
+
+  /**
    * Manually connect/disconnect
    */
   connect: () => void;
@@ -137,5 +142,6 @@ export interface StoreState<T> {
   connectionState: ConnectionState;
   options: Required<CollabOptions>;
   subscribers: Set<(value: T) => void>;
+  connectionSubscribers: Set<(state: ConnectionState) => void>;
   destroyed: boolean;
 }
