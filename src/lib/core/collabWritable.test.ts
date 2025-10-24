@@ -116,15 +116,21 @@ describe("collabWritable", () => {
 			const unsubscribe2 = store.subscribe((value) => values2.push(value));
 
 			store.set({ count: 10, message: "test" });
-			
+
 			// Wait for Y.js observer to trigger
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			// Should have at least initial + update (may have extra from Y.js observer)
 			expect(values1.length).toBeGreaterThanOrEqual(2);
 			expect(values2.length).toBeGreaterThanOrEqual(2);
-			expect(values1[values1.length - 1]).toEqual({ count: 10, message: "test" });
-			expect(values2[values2.length - 1]).toEqual({ count: 10, message: "test" });
+			expect(values1[values1.length - 1]).toEqual({
+				count: 10,
+				message: "test",
+			});
+			expect(values2[values2.length - 1]).toEqual({
+				count: 10,
+				message: "test",
+			});
 
 			unsubscribe1();
 			unsubscribe2();
@@ -136,10 +142,10 @@ describe("collabWritable", () => {
 			const unsubscribe = store.subscribe((value) => values.push(value));
 
 			store.set({ count: 1, message: "test1" });
-			
+
 			// Wait for Y.js observer to trigger
-			await new Promise(resolve => setTimeout(resolve, 10));
-			
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
 			unsubscribe();
 			store.set({ count: 2, message: "test2" });
 
@@ -340,11 +346,11 @@ describe("collabWritable", () => {
 			// Simulate two clients connecting to the same room
 			const client1 = collabWritable(
 				{ count: 0, message: "Hello from Client 1" },
-				{ room: "sync-test-room", debug: true }
+				{ room: "sync-test-room", debug: true },
 			);
 			const client2 = collabWritable(
 				{ count: 0, message: "Hello from Client 2" },
-				{ room: "sync-test-room", debug: true }
+				{ room: "sync-test-room", debug: true },
 			);
 
 			// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
@@ -359,7 +365,7 @@ describe("collabWritable", () => {
 			});
 
 			// Wait for initial state
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			// Client 1 should initialize first
 			expect(client1Value).toBeDefined();
@@ -371,12 +377,16 @@ describe("collabWritable", () => {
 		});
 
 		it("should preserve data when second client connects", async () => {
-			const initialData = { count: 42, message: "Preserved data", items: ["item1", "item2"] };
-			
+			const initialData = {
+				count: 42,
+				message: "Preserved data",
+				items: ["item1", "item2"],
+			};
+
 			// First client with existing data
-			const client1 = collabWritable(initialData, { 
-				room: "preserve-test-room", 
-				debug: true 
+			const client1 = collabWritable(initialData, {
+				room: "preserve-test-room",
+				debug: true,
 			});
 
 			// biome-ignore lint/suspicious/noExplicitAny: Test variable needs flexible typing
@@ -385,12 +395,12 @@ describe("collabWritable", () => {
 				client1Value = value;
 			});
 
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			// Second client should load existing data
 			const client2 = collabWritable(
 				{ count: 0, message: "", items: [] }, // Different initial values
-				{ room: "preserve-test-room", debug: true }
+				{ room: "preserve-test-room", debug: true },
 			);
 
 			// biome-ignore lint/suspicious/noExplicitAny: Test variable needs flexible typing
@@ -399,7 +409,7 @@ describe("collabWritable", () => {
 				client2Value = value;
 			});
 
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			// In test environment without WebSocket server, each client maintains its own state
 			// This test verifies that both clients initialize properly
@@ -416,11 +426,11 @@ describe("collabWritable", () => {
 		it("should handle sync conflicts gracefully", async () => {
 			const client1 = collabWritable(
 				{ count: 0, message: "Client 1" },
-				{ room: "conflict-test-room", debug: true }
+				{ room: "conflict-test-room", debug: true },
 			);
 			const client2 = collabWritable(
 				{ count: 0, message: "Client 2" },
-				{ room: "conflict-test-room", debug: true }
+				{ room: "conflict-test-room", debug: true },
 			);
 
 			// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
@@ -434,7 +444,7 @@ describe("collabWritable", () => {
 				client2Value = value;
 			});
 
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			// Both clients should have valid data
 			expect(client1Value).toBeDefined();
@@ -455,11 +465,11 @@ describe("collabWritable", () => {
 
 			store = collabWritable(
 				{ count: 0, message: "Test" },
-				{ 
-					room: "incognito-test-room", 
+				{
+					room: "incognito-test-room",
 					persist: true,
-					debug: true 
-				}
+					debug: true,
+				},
 			);
 
 			// biome-ignore lint/suspicious/noExplicitAny: Test variable needs flexible typing
@@ -479,7 +489,7 @@ describe("collabWritable", () => {
 		it("should handle NaN values gracefully", async () => {
 			store = collabWritable(
 				{ count: 0, message: "Test" },
-				{ room: "nan-test-room", debug: true }
+				{ room: "nan-test-room", debug: true },
 			);
 
 			// biome-ignore lint/suspicious/noExplicitAny: Test variable needs flexible typing
@@ -489,7 +499,7 @@ describe("collabWritable", () => {
 			});
 
 			// Wait for initial subscription
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			// Update with potentially problematic values
 			store.update((state) => ({
@@ -498,19 +508,19 @@ describe("collabWritable", () => {
 			}));
 
 			// Wait for Y.js observer to trigger
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			// Should handle the update gracefully
 			expect(currentValue.count).toBe(1);
 			expect(Number.isNaN(currentValue.count)).toBe(false);
-			
+
 			unsubscribe();
 		});
 
 		it("should maintain connection state across operations", async () => {
 			store = collabWritable(
 				{ count: 0 },
-				{ room: "connection-test-room", debug: true }
+				{ room: "connection-test-room", debug: true },
 			);
 
 			// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
@@ -533,7 +543,7 @@ describe("collabWritable", () => {
 		it("should handle rapid updates without conflicts", async () => {
 			store = collabWritable(
 				{ count: 0 },
-				{ room: "rapid-update-test-room", debug: true }
+				{ room: "rapid-update-test-room", debug: true },
 			);
 
 			// biome-ignore lint/suspicious/noExplicitAny: Test variable needs flexible typing
@@ -543,7 +553,7 @@ describe("collabWritable", () => {
 			});
 
 			// Wait for initial subscription
-			await new Promise(resolve => setTimeout(resolve, 10));
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
 			// Perform rapid updates
 			for (let i = 0; i < 10; i++) {
@@ -554,11 +564,11 @@ describe("collabWritable", () => {
 			}
 
 			// Wait for all Y.js observer updates to complete
-			await new Promise(resolve => setTimeout(resolve, 50));
+			await new Promise((resolve) => setTimeout(resolve, 50));
 
 			// Should handle all updates correctly
 			expect(currentValue.count).toBe(10);
-			
+
 			unsubscribe();
 		});
 
@@ -568,12 +578,12 @@ describe("collabWritable", () => {
 				message: "Complex data",
 				items: ["item1", "item2", "item3"],
 				nested: { value: 123, flag: true },
-				array: [1, 2, 3, 4, 5]
+				array: [1, 2, 3, 4, 5],
 			};
 
-			store = collabWritable(complexData, { 
-				room: "complex-data-test-room", 
-				debug: true 
+			store = collabWritable(complexData, {
+				room: "complex-data-test-room",
+				debug: true,
 			});
 
 			// biome-ignore lint/suspicious/noExplicitAny: Test variable needs flexible typing

@@ -18,14 +18,14 @@ describe("WebSocket Server", () => {
 	beforeEach(() => {
 		// Reset mocks
 		vi.clearAllMocks();
-		
+
 		// Mock WebSocket server
 		mockWss = {
 			on: vi.fn(),
 			close: vi.fn(),
 			clients: new Set(),
 		};
-		
+
 		mockServer = {
 			on: vi.fn(),
 			close: vi.fn(),
@@ -48,7 +48,7 @@ describe("WebSocket Server", () => {
 		// Test room management logic
 		const roomName = "test-room";
 		const connections = new Map();
-		
+
 		// Simulate room creation
 		const room = {
 			name: roomName,
@@ -56,7 +56,7 @@ describe("WebSocket Server", () => {
 			created: Date.now(),
 			lastActivity: Date.now(),
 		};
-		
+
 		expect(room.name).toBe(roomName);
 		expect(room.connections).toBe(connections);
 		expect(typeof room.created).toBe("number");
@@ -67,10 +67,10 @@ describe("WebSocket Server", () => {
 		// Test disconnection handling
 		const connections = new Map();
 		const mockWs = { readyState: WebSocket.OPEN };
-		
+
 		connections.set("client1", mockWs);
 		expect(connections.size).toBe(1);
-		
+
 		// Simulate disconnection
 		connections.delete("client1");
 		expect(connections.size).toBe(0);
@@ -80,47 +80,49 @@ describe("WebSocket Server", () => {
 		// Test garbage collection logic
 		const now = Date.now();
 		const timeout = 5 * 60 * 1000; // 5 minutes
-		
+
 		const inactiveRoom = {
 			name: "inactive-room",
 			connections: new Map(),
 			created: now - (timeout + 1000), // Created more than 5 minutes ago
 			lastActivity: now - (timeout + 1000),
 		};
-		
+
 		const activeRoom = {
 			name: "active-room",
 			connections: new Map(),
 			created: now - 1000, // Created 1 second ago
 			lastActivity: now - 1000,
 		};
-		
+
 		// Inactive room should be eligible for garbage collection
-		const shouldGcInactive = inactiveRoom.connections.size === 0 && 
-			(now - inactiveRoom.lastActivity) > timeout;
+		const shouldGcInactive =
+			inactiveRoom.connections.size === 0 &&
+			now - inactiveRoom.lastActivity > timeout;
 		expect(shouldGcInactive).toBe(true);
-		
+
 		// Active room should not be garbage collected
-		const shouldGcActive = activeRoom.connections.size === 0 && 
-			(now - activeRoom.lastActivity) > timeout;
+		const shouldGcActive =
+			activeRoom.connections.size === 0 &&
+			now - activeRoom.lastActivity > timeout;
 		expect(shouldGcActive).toBe(false);
 	});
 
 	it("should handle WebSocket message broadcasting", () => {
 		// Test message broadcasting logic
 		const connections = new Map();
-		const mockWs1 = { 
+		const mockWs1 = {
 			readyState: WebSocket.OPEN,
 			send: vi.fn(),
 		};
-		const mockWs2 = { 
+		const mockWs2 = {
 			readyState: WebSocket.OPEN,
 			send: vi.fn(),
 		};
-		
+
 		connections.set("client1", mockWs1);
 		connections.set("client2", mockWs2);
-		
+
 		// Simulate broadcasting a message
 		const message = JSON.stringify({ type: "update", data: "test" });
 		connections.forEach((ws) => {
@@ -128,7 +130,7 @@ describe("WebSocket Server", () => {
 				ws.send(message);
 			}
 		});
-		
+
 		expect(mockWs1.send).toHaveBeenCalledWith(message);
 		expect(mockWs2.send).toHaveBeenCalledWith(message);
 	});
@@ -137,7 +139,7 @@ describe("WebSocket Server", () => {
 		// Test graceful shutdown
 		const shutdownSpy = vi.fn();
 		const closeSpy = vi.fn();
-		
+
 		// Mock shutdown function
 		const shutdown = () => {
 			shutdownSpy();
@@ -147,9 +149,9 @@ describe("WebSocket Server", () => {
 				});
 			});
 		};
-		
+
 		shutdown();
-		
+
 		expect(shutdownSpy).toHaveBeenCalled();
 		expect(mockWss.close).toHaveBeenCalled();
 		expect(mockServer.close).toHaveBeenCalled();
@@ -159,14 +161,14 @@ describe("WebSocket Server", () => {
 		// Test error handling
 		const errorHandler = vi.fn();
 		const mockError = new Error("Connection failed");
-		
+
 		// Simulate error handling
 		const handleError = (error: Error) => {
 			errorHandler(error);
 		};
-		
+
 		handleError(mockError);
-		
+
 		expect(errorHandler).toHaveBeenCalledWith(mockError);
 	});
 
@@ -178,12 +180,12 @@ describe("WebSocket Server", () => {
 			created: Date.now(),
 			lastActivity: Date.now(),
 		};
-		
+
 		const initialActivity = room.lastActivity;
-		
+
 		// Simulate activity update
 		room.lastActivity = Date.now();
-		
+
 		expect(room.lastActivity).toBeGreaterThan(initialActivity);
 	});
 
@@ -191,18 +193,18 @@ describe("WebSocket Server", () => {
 		// Test concurrent connections
 		const roomName = "concurrent-test-room";
 		const connections = new Map();
-		
+
 		// Add multiple connections to the same room
 		for (let i = 0; i < 5; i++) {
-			const mockWs = { 
+			const mockWs = {
 				readyState: WebSocket.OPEN,
 				send: vi.fn(),
 			};
 			connections.set(`client${i}`, mockWs);
 		}
-		
+
 		expect(connections.size).toBe(5);
-		
+
 		// All connections should be tracked
 		connections.forEach((ws, clientId) => {
 			expect(ws.readyState).toBe(WebSocket.OPEN);
