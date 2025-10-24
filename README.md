@@ -27,7 +27,17 @@ yarn add svelte-collab
 
 ## 🚀 Quick Start
 
-### 1. Start the WebSocket Server
+### 1. Install Dependencies
+
+```bash
+npm install
+# or
+pnpm install
+# or
+yarn install
+```
+
+### 2. Start the WebSocket Server
 
 ```bash
 npm run server
