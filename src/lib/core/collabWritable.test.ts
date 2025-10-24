@@ -33,7 +33,10 @@ describe("collabWritable", () => {
     it("should apply default options", () => {
       store = collabWritable({ count: 0 }, { room: "test-room" });
 
-      const connectionState = store.getConnectionState();
+      let connectionState: any;
+      store.connectionState.subscribe((state) => {
+        connectionState = state;
+      })();
       expect(connectionState.status).toBe("disconnected");
     });
 
@@ -193,8 +196,11 @@ describe("collabWritable", () => {
     });
 
     it("should start in disconnected state without server URL", () => {
-      const state = store.getConnectionState();
-      expect(state.status).toBe("disconnected");
+      let connectionState: any;
+      store.connectionState.subscribe((state) => {
+        connectionState = state;
+      })();
+      expect(connectionState.status).toBe("disconnected");
     });
 
     it("should provide connect/disconnect methods", () => {

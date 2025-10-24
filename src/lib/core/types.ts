@@ -102,14 +102,12 @@ export interface CollabStore<T> {
   getYMap: () => Y.Map<any>;
 
   /**
-   * Get connection state
+   * Readable store for connection state
+   * Use with $connectionState in Svelte components
    */
-  getConnectionState: () => ConnectionState;
-
-  /**
-   * Subscribe to connection state changes
-   */
-  subscribeConnection: (run: (state: ConnectionState) => void) => () => void;
+  connectionState: {
+    subscribe: (run: (state: ConnectionState) => void) => () => void;
+  };
 
   /**
    * Manually connect/disconnect

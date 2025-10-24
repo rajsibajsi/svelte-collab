@@ -21,13 +21,10 @@
 		}
 	);
 
-	let connectionState = $state(store.getConnectionState());
 	let newItem = $state('');
-
-	// Subscribe to connection state changes
-	const unsubscribeConnection = store.subscribeConnection((state) => {
-		connectionState = state;
-	});
+	
+	// Extract connection state store for easier access
+	const { connectionState } = store;
 
 	function increment() {
 		store.update(state => ({
@@ -71,13 +68,12 @@
 
 	// Cleanup on destroy
 	onDestroy(() => {
-		unsubscribeConnection();
 		store.destroy();
 	});
 
 	// Connection status color
 	const statusColor = $derived.by(() => {
-		switch (connectionState.status) {
+		switch ($connectionState.status) {
 			case 'connected': return 'bg-green-500';
 			case 'connecting': return 'bg-yellow-500';
 			case 'disconnected': return 'bg-gray-500';
@@ -103,7 +99,7 @@
 				<div class="flex items-center gap-2">
 					<div class="w-3 h-3 rounded-full {statusColor} animate-pulse"></div>
 					<span class="text-sm font-medium text-gray-700">
-						{connectionState.status}
+						{$connectionState.status}
 					</span>
 				</div>
 				<div class="text-sm text-gray-500">

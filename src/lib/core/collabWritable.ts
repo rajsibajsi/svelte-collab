@@ -149,23 +149,20 @@ export function collabWritable<T extends Record<string, any>>(
         );
 
         // Connection event handlers
-        state.providers.websocket.on(
-          "status",
-          (event: { status: string }) => {
-            logger.log("WebSocket status event:", event);
+        state.providers.websocket.on("status", (event: { status: string }) => {
+          logger.log("WebSocket status event:", event);
 
-            if (event.status === "connected") {
-              updateConnectionState({
-                status: "connected",
-                lastConnected: new Date(),
-              });
-            } else if (event.status === "disconnected") {
-              updateConnectionState({ status: "disconnected" });
-            } else if (event.status === "connecting") {
-              updateConnectionState({ status: "connecting" });
-            }
+          if (event.status === "connected") {
+            updateConnectionState({
+              status: "connected",
+              lastConnected: new Date(),
+            });
+          } else if (event.status === "disconnected") {
+            updateConnectionState({ status: "disconnected" });
+          } else if (event.status === "connecting") {
+            updateConnectionState({ status: "connecting" });
           }
-        );
+        });
 
         state.providers.websocket.on("sync", (isSynced: boolean) => {
           logger.log("WebSocket sync:", isSynced);
@@ -203,7 +200,7 @@ export function collabWritable<T extends Record<string, any>>(
   function updateConnectionState(update: Partial<ConnectionState>) {
     state.connectionState = { ...state.connectionState, ...update };
     logger.log("Connection state updated:", state.connectionState);
-    
+
     // Notify all connection subscribers
     state.connectionSubscribers.forEach((subscriber) => {
       try {
@@ -230,6 +227,22 @@ export function collabWritable<T extends Record<string, any>>(
       return () => {
         state.subscribers.delete(run);
       };
+    },
+
+    // Connection state as a readable store
+    connectionState: {
+      subscribe(run: (connectionState: ConnectionState) => void) {
+        // Immediately call with current state
+        run({ ...state.connectionState });
+        
+        // Add to subscribers
+        state.connectionSubscribers.add(run);
+        
+        // Return unsubscribe function
+        return () => {
+          state.connectionSubscribers.delete(run);
+        };
+      },
     },
 
     set(value: T) {
@@ -277,23 +290,6 @@ export function collabWritable<T extends Record<string, any>>(
 
     getYMap() {
       return state.ymap;
-    },
-
-    getConnectionState() {
-      return { ...state.connectionState };
-    },
-
-    subscribeConnection(run: (state: ConnectionState) => void) {
-      // Immediately call with current state
-      run({ ...state.connectionState });
-      
-      // Add to subscribers
-      state.connectionSubscribers.add(run);
-      
-      // Return unsubscribe function
-      return () => {
-        state.connectionSubscribers.delete(run);
-      };
     },
 
     connect() {
