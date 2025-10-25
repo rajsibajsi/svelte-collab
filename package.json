@@ -54,6 +54,7 @@
 		"@tailwindcss/vite": "^4.1.13",
 		"@types/ws": "^8.18.1",
 		"@vitest/browser": "^4.0.3",
+		"@vitest/browser-playwright": "^4.0.3",
 		"playwright": "^1.55.1",
 		"publint": "^0.3.13",
 		"svelte": "^5.41.4",
