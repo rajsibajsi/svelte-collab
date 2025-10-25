@@ -1,7 +1,7 @@
 <script lang="ts">
-import { onDestroy } from "svelte";
 import { browser } from "$app/environment";
 import { collabWritable } from "$lib/index.js";
+import { onDestroy } from "svelte";
 
 // Create a collaborative store (only on client side)
 // biome-ignore lint/suspicious/noExplicitAny: Store type is complex due to SSR constraints
