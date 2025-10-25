@@ -22,7 +22,7 @@ if (typeof globalThis.WebSocket === "undefined") {
 		removeEventListener() {
 			// Mock removeEventListener method
 		}
-	// biome-ignore lint/suspicious/noExplicitAny: Mock WebSocket for Node.js environment
+		// biome-ignore lint/suspicious/noExplicitAny: Mock WebSocket for Node.js environment
 	} as any;
 }
 
