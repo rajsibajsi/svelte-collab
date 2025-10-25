@@ -7,11 +7,23 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Svelte](https://img.shields.io/badge/Svelte-5-orange.svg)](https://svelte.dev/)
 
-Transform any Svelte app into a collaborative experience with just a few lines of code. Built on top of battle-tested Y.js CRDTs, `svelte-collab` provides seamless real-time synchronization with automatic conflict resolution.
+Transform any Svelte app into a collaborative experience with just a few lines
+of code. Built on top of battle-tested Y.js CRDTs, `svelte-collab` provides
+seamless real-time synchronization with automatic conflict resolution.
+
+## 🎬 Demo
+
+![svelte-collab Demo](demo.gif)
+
+_Real-time collaboration in action - changes sync instantly across multiple
+browser tabs!_
+
+> **📹 [Watch Full Demo Video](demo.webm)** - Higher quality WebM format
 
 ## ✨ Features
 
-- **🔄 Real-time Sync** - Changes propagate instantly across all connected clients
+- **🔄 Real-time Sync** - Changes propagate instantly across all connected
+  clients
 - **💾 Persistence** - Automatic IndexedDB persistence (browser only)
 - **🌐 WebSocket Provider** - Simple server included for development
 - **🎯 Type-Safe** - Full TypeScript support with comprehensive types
@@ -85,7 +97,8 @@ The server will start at `ws://localhost:1234`.
 
 ### 3. Open Multiple Tabs
 
-Open the same page in multiple browser tabs and watch changes sync in real-time! ✨
+Open the same page in multiple browser tabs and watch changes sync in real-time!
+✨
 
 ## 📖 API Reference
 
@@ -97,12 +110,12 @@ Creates a collaborative Svelte store.
 
 - **`initialValue`** `T` - Initial store value (must be an object)
 - **`options`** `CollabOptions`:
-  - **`room`** `string` *(required)* - Unique room identifier
-  - **`serverUrl`** `string` *(optional)* - WebSocket server URL
-  - **`persist`** `boolean` *(default: `true`)* - Enable IndexedDB persistence
-  - **`user`** `UserInfo` *(optional)* - User information for presence
-  - **`stateName`** `string` *(default: `'state'`)* - Y.Map name
-  - **`debug`** `boolean` *(default: `false`)* - Enable debug logging
+  - **`room`** `string` _(required)_ - Unique room identifier
+  - **`serverUrl`** `string` _(optional)_ - WebSocket server URL
+  - **`persist`** `boolean` _(default: `true`)_ - Enable IndexedDB persistence
+  - **`user`** `UserInfo` _(optional)_ - User information for presence
+  - **`stateName`** `string` _(default: `'state'`)_ - Y.Map name
+  - **`debug`** `boolean` _(default: `false`)_ - Enable debug logging
 
 #### Returns
 
@@ -217,7 +230,8 @@ npx tsx server/websocket.ts
 
 For production, you can:
 
-1. **Use the included server** - Deploy `server/websocket.ts` to your hosting platform
+1. **Use the included server** - Deploy `server/websocket.ts` to your hosting
+   platform
 2. **Use y-websocket server** - `npx y-websocket`
 3. **Custom server** - Build your own using the `y-websocket` package
 
@@ -305,13 +319,13 @@ npm run lint
 ### Custom Y.Doc
 
 ```typescript
-import * as Y from 'yjs';
-import { collabWritable } from 'svelte-collab';
+import * as Y from "yjs";
+import { collabWritable } from "svelte-collab";
 
 const ydoc = new Y.Doc();
-const store = collabWritable({ data: 'test' }, {
-  room: 'custom',
-  ydoc // Use your own Y.Doc
+const store = collabWritable({ data: "test" }, {
+  room: "custom",
+  ydoc, // Use your own Y.Doc
 });
 ```
 
@@ -319,9 +333,9 @@ const store = collabWritable({ data: 'test' }, {
 
 ```typescript
 // Works offline with just local persistence
-const store = collabWritable({ data: 'test' }, {
-  room: 'offline-room',
-  persist: true
+const store = collabWritable({ data: "test" }, {
+  room: "offline-room",
+  persist: true,
   // No serverUrl = offline mode
 });
 ```
@@ -329,9 +343,9 @@ const store = collabWritable({ data: 'test' }, {
 ### Manual Connection Control
 
 ```typescript
-const store = collabWritable({ data: 'test' }, { 
-  room: 'manual',
-  serverUrl: 'ws://localhost:1234'
+const store = collabWritable({ data: "test" }, {
+  room: "manual",
+  serverUrl: "ws://localhost:1234",
 });
 
 // Disconnect
@@ -376,7 +390,8 @@ store.connect();
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see [PROJECT_SPEC.md](./PROJECT_SPEC.md) for development phases and planned features.
+Contributions are welcome! Please see [PROJECT_SPEC.md](./PROJECT_SPEC.md) for
+development phases and planned features.
 
 ## 📄 License
 
@@ -384,11 +399,12 @@ MIT © rajsibajsi
 
 ## 🙏 Acknowledgments
 
-- **[Y.js](https://github.com/yjs/yjs)** - The amazing CRDT library that powers this project
+- **[Y.js](https://github.com/yjs/yjs)** - The amazing CRDT library that powers
+  this project
 - **[Svelte](https://svelte.dev/)** - The best frontend framework
-- **[y-websocket](https://github.com/yjs/y-websocket)** - WebSocket provider for Y.js
+- **[y-websocket](https://github.com/yjs/y-websocket)** - WebSocket provider for
+  Y.js
 
 ---
 
 **Made with ❤️ for the Svelte community**
-
