@@ -1,66 +1,86 @@
 <script lang="ts">
-import { onDestroy } from "svelte";
+import { browser } from "$app/environment";
+import type { CollabStore } from "$lib/core/types.js";
 import { collabWritable } from "$lib/index.js";
+import { onDestroy } from "svelte";
 
-// Create a collaborative store
-const store = collabWritable(
-	{
-		count: 0,
-		message: "Hello, collaborative world!",
-		items: [] as string[],
-	},
-	{
-		room: "demo-room",
-		serverUrl: "ws://localhost:1234",
-		persist: true,
-		debug: true,
-		user: {
-			name: `User-${Math.floor(Math.random() * 1000)}`,
-			color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+// Define the store data type
+interface StoreData {
+	count: number;
+	message: string;
+	items: string[];
+}
+
+// Create a collaborative store (only on client side)
+let store = $state<CollabStore<StoreData> | null>(null);
+
+if (browser) {
+	store = collabWritable(
+		{
+			count: 0,
+			message: "Hello, collaborative world!",
+			items: [] as string[],
 		},
-	},
-);
+		{
+			room: "demo-room",
+			serverUrl: "ws://localhost:1234",
+			persist: true,
+			debug: true,
+			user: {
+				name: `User-${Math.floor(Math.random() * 1000)}`,
+				color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+			},
+		},
+	);
+}
 
 let newItem = $state("");
 let message = $state("");
 
 // Extract connection state store for easier access
-// biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template via $connectionState
-const { connectionState } = store;
+const connectionState = $derived(
+	store?.connectionState || { subscribe: () => () => {} },
+);
 
 // Update message when store changes
 $effect(() => {
-	message = $store.message || "";
+	if (store) {
+		message = $store?.message || "";
+	}
 });
 
 // Update store when message changes
 $effect(() => {
-	if (message !== ($store.message || "")) {
-		store.update((s) => ({ ...s, message }));
+	if (store && message !== ($store?.message || "")) {
+		store.update((s: StoreData) => ({ ...s, message }));
 	}
 });
 
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
 function increment() {
-	store.update((state) => ({
-		...state,
-		count: (state.count ?? 0) + 1,
-	}));
+	if (store) {
+		store.update((state: StoreData) => ({
+			...state,
+			count: (state.count ?? 0) + 1,
+		}));
+	}
 }
 
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
 function decrement() {
-	store.update((state) => ({
-		...state,
-		count: (state.count ?? 0) - 1,
-	}));
+	if (store) {
+		store.update((state: StoreData) => ({
+			...state,
+			count: (state.count ?? 0) - 1,
+		}));
+	}
 }
 
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
 function addItem() {
-	if (!newItem.trim()) return;
+	if (!newItem.trim() || !store) return;
 
-	store.update((state) => ({
+	store.update((state: StoreData) => ({
 		...state,
 		items: [...(state.items ?? []), newItem.trim()],
 	}));
@@ -70,40 +90,51 @@ function addItem() {
 
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
 function removeItem(index: number) {
-	store.update((state) => ({
-		...state,
-		items: (state.items ?? []).filter((_, i) => i !== index),
-	}));
+	if (store) {
+		store.update((state: StoreData) => ({
+			...state,
+			items: (state.items ?? []).filter((_, i) => i !== index),
+		}));
+	}
 }
 
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
 function clearAll() {
-	store.set({
-		count: 0,
-		message: "Hello, collaborative world!",
-		items: [],
-	});
+	if (store) {
+		store.set({
+			count: 0,
+			message: "Hello, collaborative world!",
+			items: [],
+		});
+	}
 }
 
 // Cleanup on destroy
 onDestroy(() => {
-	store.destroy();
+	if (store) {
+		store.destroy();
+	}
 });
 
 // Connection status color
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
 const statusColor = $derived.by(() => {
-	switch ($connectionState.status) {
-		case "connected":
-			return "bg-green-500";
-		case "connecting":
-			return "bg-yellow-500";
-		case "disconnected":
-			return "bg-gray-500";
-		case "error":
-			return "bg-red-500";
-		default:
-			return "bg-gray-500";
+	if (!connectionState || !store) return "bg-gray-500";
+	try {
+		switch ($connectionState.status) {
+			case "connected":
+				return "bg-green-500";
+			case "connecting":
+				return "bg-yellow-500";
+			case "disconnected":
+				return "bg-gray-500";
+			case "error":
+				return "bg-red-500";
+			default:
+				return "bg-gray-500";
+		}
+	} catch {
+		return "bg-gray-500";
 	}
 });
 </script>
@@ -124,7 +155,7 @@ const statusColor = $derived.by(() => {
 				<div class="flex items-center gap-2">
 					<div class="w-3 h-3 rounded-full {statusColor} animate-pulse"></div>
 					<span class="text-sm font-medium text-gray-700">
-						{$connectionState.status}
+						{connectionState ? $connectionState.status : "disconnected"}
 					</span>
 				</div>
 				<div class="text-sm text-gray-500">
@@ -151,7 +182,7 @@ const statusColor = $derived.by(() => {
 					</button>
 					
 					<div class="text-6xl font-bold text-purple-600 min-w-[120px] text-center" data-testid="counter-display">
-						{$store.count ?? 0}
+						{store ? ($store?.count ?? 0) : 0}
 					</div>
 					
 					<button
@@ -182,7 +213,7 @@ const statusColor = $derived.by(() => {
 					data-testid="message-input"
 				/>
 				<div class="text-sm text-gray-600 mt-4" data-testid="message-display">
-					{$store.message || ""}
+					{store ? ($store?.message || "") : ""}
 				</div>
 				
 				<p class="text-sm text-gray-600 mt-4">
@@ -215,7 +246,7 @@ const statusColor = $derived.by(() => {
 				</button>
 			</div>
 			
-			{#if $store.items && $store.items.length > 0}
+			{#if store && $store?.items && $store.items.length > 0}
 				<ul class="space-y-2" data-testid="todo-list">
 					{#each $store.items as item, index}
 						<li class="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
@@ -253,13 +284,13 @@ const statusColor = $derived.by(() => {
 		<!-- Controls -->
 		<div class="flex gap-4 justify-center">
 			<button
-				onclick={() => store.disconnect()}
+				onclick={() => store?.disconnect()}
 				class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
 			>
 				Disconnect
 			</button>
 			<button
-				onclick={() => store.connect()}
+				onclick={() => store?.connect()}
 				class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
 			>
 				Reconnect
