@@ -355,6 +355,7 @@ describe("collabWritable", () => {
 
 			// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
 			let client1Value: any;
+			// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
 			let client2Value: any;
 
 			client1.subscribe((value) => {
@@ -403,7 +404,7 @@ describe("collabWritable", () => {
 				{ room: "preserve-test-room", debug: true },
 			);
 
-			// biome-ignore lint/suspicious/noExplicitAny: Test variable needs flexible typing
+			// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
 			let client2Value: any;
 			client2.subscribe((value) => {
 				client2Value = value;
@@ -435,6 +436,7 @@ describe("collabWritable", () => {
 
 			// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
 			let client1Value: any;
+			// biome-ignore lint/suspicious/noExplicitAny: Test variables need flexible typing
 			let client2Value: any;
 
 			client1.subscribe((value) => {

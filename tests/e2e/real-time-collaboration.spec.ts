@@ -1,7 +1,9 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Real-Time Collaboration E2E Tests", () => {
+	// biome-ignore lint/suspicious/noExplicitAny: Test process variables need flexible typing
 	let serverProcess: any = null;
+	// biome-ignore lint/suspicious/noExplicitAny: Test process variables need flexible typing
 	let websocketProcess: any = null;
 
 	test.beforeAll(async () => {
@@ -31,11 +33,13 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 		}
 	});
 
-	test("should sync counter between multiple browser contexts", async ({ browser }) => {
+	test("should sync counter between multiple browser contexts", async ({
+		browser,
+	}) => {
 		// Create two browser contexts (simulating different users)
 		const context1 = await browser.newContext();
 		const context2 = await browser.newContext();
-		
+
 		const page1 = await context1.newPage();
 		const page2 = await context2.newPage();
 
@@ -88,10 +92,12 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 		}
 	});
 
-	test("should sync messages between multiple browser contexts", async ({ browser }) => {
+	test("should sync messages between multiple browser contexts", async ({
+		browser,
+	}) => {
 		const context1 = await browser.newContext();
 		const context2 = await browser.newContext();
-		
+
 		const page1 = await context1.newPage();
 		const page2 = await context2.newPage();
 
@@ -114,24 +120,30 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 			await expect(messageDisplay1).toContainText("Hello from User 1!");
 
 			// Wait for sync to page 2
-			await expect(messageDisplay2).toContainText("Hello from User 1!", { timeout: 5000 });
+			await expect(messageDisplay2).toContainText("Hello from User 1!", {
+				timeout: 5000,
+			});
 
 			// User 2 types a message
 			await messageInput2.fill("Hello from User 2!");
 			await expect(messageDisplay2).toContainText("Hello from User 2!");
 
 			// Wait for sync to page 1
-			await expect(messageDisplay1).toContainText("Hello from User 2!", { timeout: 5000 });
+			await expect(messageDisplay1).toContainText("Hello from User 2!", {
+				timeout: 5000,
+			});
 		} finally {
 			await context1.close();
 			await context2.close();
 		}
 	});
 
-	test("should sync todo list between multiple browser contexts", async ({ browser }) => {
+	test("should sync todo list between multiple browser contexts", async ({
+		browser,
+	}) => {
 		const context1 = await browser.newContext();
 		const context2 = await browser.newContext();
-		
+
 		const page1 = await context1.newPage();
 		const page2 = await context2.newPage();
 
@@ -157,7 +169,9 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 			await expect(todoList1).toContainText("Todo from User 1");
 
 			// Wait for sync to page 2
-			await expect(todoList2).toContainText("Todo from User 1", { timeout: 5000 });
+			await expect(todoList2).toContainText("Todo from User 1", {
+				timeout: 5000,
+			});
 
 			// User 2 adds a todo
 			await todoInput2.fill("Todo from User 2");
@@ -165,7 +179,9 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 			await expect(todoList2).toContainText("Todo from User 2");
 
 			// Wait for sync to page 1
-			await expect(todoList1).toContainText("Todo from User 2", { timeout: 5000 });
+			await expect(todoList1).toContainText("Todo from User 2", {
+				timeout: 5000,
+			});
 
 			// Both should have both todos
 			await expect(todoList1.locator("li")).toHaveCount(2);
@@ -179,7 +195,7 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 	test("should handle todo removal across contexts", async ({ browser }) => {
 		const context1 = await browser.newContext();
 		const context2 = await browser.newContext();
-		
+
 		const page1 = await context1.newPage();
 		const page2 = await context2.newPage();
 
@@ -203,20 +219,34 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 			await addTodoBtn2.click();
 
 			// Wait for both todos to sync
-			await page1.waitForSelector("[data-testid='todo-list'] li:nth-child(2)", { timeout: 5000 });
-			await page2.waitForSelector("[data-testid='todo-list'] li:nth-child(2)", { timeout: 5000 });
+			await page1.waitForSelector("[data-testid='todo-list'] li:nth-child(2)", {
+				timeout: 5000,
+			});
+			await page2.waitForSelector("[data-testid='todo-list'] li:nth-child(2)", {
+				timeout: 5000,
+			});
 
 			// User 1 removes a todo
-			const removeBtn1 = page1.locator("[data-testid='remove-todo-btn']").first();
+			const removeBtn1 = page1
+				.locator("[data-testid='remove-todo-btn']")
+				.first();
 			await removeBtn1.click();
 
 			// Wait for sync
-			await page1.waitForSelector("[data-testid='todo-list'] li", { timeout: 5000 });
-			await page2.waitForSelector("[data-testid='todo-list'] li", { timeout: 5000 });
+			await page1.waitForSelector("[data-testid='todo-list'] li", {
+				timeout: 5000,
+			});
+			await page2.waitForSelector("[data-testid='todo-list'] li", {
+				timeout: 5000,
+			});
 
 			// Both should have 1 todo remaining
-			await expect(page1.locator("[data-testid='todo-list'] li")).toHaveCount(1);
-			await expect(page2.locator("[data-testid='todo-list'] li")).toHaveCount(1);
+			await expect(page1.locator("[data-testid='todo-list'] li")).toHaveCount(
+				1,
+			);
+			await expect(page2.locator("[data-testid='todo-list'] li")).toHaveCount(
+				1,
+			);
 		} finally {
 			await context1.close();
 			await context2.close();
@@ -226,7 +256,7 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 	test("should handle clear all across contexts", async ({ browser }) => {
 		const context1 = await browser.newContext();
 		const context2 = await browser.newContext();
-		
+
 		const page1 = await context1.newPage();
 		const page2 = await context2.newPage();
 
@@ -250,20 +280,32 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 			await addTodoBtn2.click();
 
 			// Wait for both todos to sync
-			await page1.waitForSelector("[data-testid='todo-list'] li:nth-child(2)", { timeout: 5000 });
-			await page2.waitForSelector("[data-testid='todo-list'] li:nth-child(2)", { timeout: 5000 });
+			await page1.waitForSelector("[data-testid='todo-list'] li:nth-child(2)", {
+				timeout: 5000,
+			});
+			await page2.waitForSelector("[data-testid='todo-list'] li:nth-child(2)", {
+				timeout: 5000,
+			});
 
 			// User 1 clears all
 			const clearAllBtn1 = page1.locator("[data-testid='clear-all-btn']");
 			await clearAllBtn1.click();
 
 			// Wait for sync
-			await page1.waitForSelector("[data-testid='todo-list']", { timeout: 5000 });
-			await page2.waitForSelector("[data-testid='todo-list']", { timeout: 5000 });
+			await page1.waitForSelector("[data-testid='todo-list']", {
+				timeout: 5000,
+			});
+			await page2.waitForSelector("[data-testid='todo-list']", {
+				timeout: 5000,
+			});
 
 			// Both should have no todos
-			await expect(page1.locator("[data-testid='todo-list'] li")).toHaveCount(0);
-			await expect(page2.locator("[data-testid='todo-list'] li")).toHaveCount(0);
+			await expect(page1.locator("[data-testid='todo-list'] li")).toHaveCount(
+				0,
+			);
+			await expect(page2.locator("[data-testid='todo-list'] li")).toHaveCount(
+				0,
+			);
 		} finally {
 			await context1.close();
 			await context2.close();
@@ -273,7 +315,7 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 	test("should handle rapid concurrent updates", async ({ browser }) => {
 		const context1 = await browser.newContext();
 		const context2 = await browser.newContext();
-		
+
 		const page1 = await context1.newPage();
 		const page2 = await context2.newPage();
 
@@ -305,7 +347,7 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 			const finalValue1 = await counter1.textContent();
 			const finalValue2 = await counter2.textContent();
 			expect(finalValue1).toBe(finalValue2);
-			expect(parseInt(finalValue1 || "0")).toBeGreaterThan(0);
+			expect(parseInt(finalValue1 || "0", 10)).toBeGreaterThan(0);
 		} finally {
 			await context1.close();
 			await context2.close();
@@ -320,7 +362,9 @@ test.describe("Real-Time Collaboration E2E Tests", () => {
 			await page1.goto("http://localhost:5173");
 
 			// Should start disconnected
-			await expect(page1.locator("[data-testid='connection-status']")).toContainText("Disconnected");
+			await expect(
+				page1.locator("[data-testid='connection-status']"),
+			).toContainText("Disconnected");
 
 			// Wait for connection attempt
 			await page1.waitForSelector("text=Connecting", { timeout: 5000 });

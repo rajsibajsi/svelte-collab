@@ -1,7 +1,7 @@
+import { type ChildProcess, spawn } from "node:child_process";
+import { setTimeout as sleep } from "node:timers/promises";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { WebSocket } from "ws";
-import { spawn, ChildProcess } from "node:child_process";
-import { setTimeout } from "node:timers/promises";
 
 describe("WebSocket Server Integration", () => {
 	let serverProcess: ChildProcess | null = null;
@@ -16,7 +16,7 @@ describe("WebSocket Server Integration", () => {
 		});
 
 		// Wait for server to start
-		await setTimeout(1000);
+		await sleep(1000);
 	});
 
 	afterEach(() => {
@@ -49,7 +49,10 @@ describe("WebSocket Server Integration", () => {
 						new Promise<void>((resolve, reject) => {
 							ws.on("open", () => resolve());
 							ws.on("error", reject);
-							setTimeout(() => reject(new Error("Connection timeout")), 5000);
+							global.setTimeout(
+								() => reject(new Error("Connection timeout")),
+								5000,
+							);
 						}),
 				),
 			);
@@ -99,14 +102,19 @@ describe("WebSocket Server Integration", () => {
 			});
 
 			// Send message from client1
-			const testMessage = JSON.stringify({ type: "test", data: "Hello from client1" });
+			const testMessage = JSON.stringify({
+				type: "test",
+				data: "Hello from client1",
+			});
 			client1.send(testMessage);
 
 			// Wait for message propagation
-			await setTimeout(100);
+			await sleep(100);
 
 			// Client2 should receive the message
-			expect(messages.some((msg) => msg.includes("Hello from client1"))).toBe(true);
+			expect(messages.some((msg) => msg.includes("Hello from client1"))).toBe(
+				true,
+			);
 		} finally {
 			clients.forEach((ws) => {
 				if (ws.readyState === WebSocket.OPEN) {
@@ -141,7 +149,7 @@ describe("WebSocket Server Integration", () => {
 			clients[0].close();
 
 			// Wait for disconnection to be processed
-			await setTimeout(100);
+			await sleep(100);
 
 			// Remaining client should still be connected
 			expect(clients[1].readyState).toBe(WebSocket.OPEN);
@@ -161,7 +169,7 @@ describe("WebSocket Server Integration", () => {
 		serverProcess?.kill("SIGTERM");
 
 		// Wait for server to shut down
-		await setTimeout(2000);
+		await sleep(2000);
 
 		// Server should be terminated
 		expect(serverProcess?.killed).toBe(true);
@@ -236,7 +244,7 @@ describe("WebSocket Server Integration", () => {
 			client1.send(JSON.stringify(largeData));
 
 			// Wait for message propagation
-			await setTimeout(200);
+			await sleep(200);
 
 			expect(receivedMessage).toBe(true);
 		} finally {

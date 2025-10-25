@@ -36,7 +36,7 @@ $effect(() => {
 // Update store when message changes
 $effect(() => {
 	if (message !== ($store.message || "")) {
-		store.update(s => ({ ...s, message }));
+		store.update((s) => ({ ...s, message }));
 	}
 });
 
