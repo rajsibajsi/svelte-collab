@@ -1,8 +1,8 @@
 <script lang="ts">
-import { onDestroy } from "svelte";
 import { browser } from "$app/environment";
 import type { CollabStore } from "$lib/core/types.js";
 import { collabWritable } from "$lib/index.js";
+import { onDestroy } from "svelte";
 
 // Define the store data type
 interface StoreData {
@@ -12,7 +12,7 @@ interface StoreData {
 }
 
 // Create a collaborative store (only on client side)
-let store: CollabStore<StoreData> | null = null;
+let store = $state<CollabStore<StoreData> | null>(null);
 
 if (browser) {
 	store = collabWritable(
@@ -38,9 +38,9 @@ let newItem = $state("");
 let message = $state("");
 
 // Extract connection state store for easier access
-const { connectionState } = store || {
-	connectionState: { subscribe: () => () => {} },
-};
+const connectionState = $derived(
+	store?.connectionState || { subscribe: () => () => {} },
+);
 
 // Update message when store changes
 $effect(() => {
