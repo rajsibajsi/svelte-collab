@@ -1,4 +1,3 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Test code */
 import { type ChildProcess, spawn } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -7,7 +6,6 @@ import type { CollabStore } from "../../src/lib/core/types.js";
 
 // Mock WebSocket for Node.js environment
 if (typeof globalThis.WebSocket === "undefined") {
-	// biome-ignore lint/suspicious/noExplicitAny: Mock WebSocket for Node.js environment
 	globalThis.WebSocket = class WebSocket {
 		close() {
 			// Mock close method
@@ -24,6 +22,7 @@ if (typeof globalThis.WebSocket === "undefined") {
 		removeEventListener() {
 			// Mock removeEventListener method
 		}
+	// biome-ignore lint/suspicious/noExplicitAny: Mock WebSocket for Node.js environment
 	} as any;
 }
 

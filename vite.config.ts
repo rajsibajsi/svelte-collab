@@ -1,7 +1,7 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vitest/config";
 import { playwright } from "@vitest/browser-playwright";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
@@ -14,7 +14,7 @@ export default defineConfig({
 					name: "client",
 					browser: {
 						enabled: true,
-						provider: playwright,
+						provider: playwright(),
 						instances: [{ browser: "chromium" }],
 					},
 					include: ["src/**/*.svelte.{test,spec}.{js,ts}"],
