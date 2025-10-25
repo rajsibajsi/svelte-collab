@@ -1,9 +1,10 @@
 <script lang="ts">
 import { onDestroy } from "svelte";
-import { collabWritable } from "$lib/index.js";
 import { browser } from "$app/environment";
+import { collabWritable } from "$lib/index.js";
 
 // Create a collaborative store (only on client side)
+// biome-ignore lint/suspicious/noExplicitAny: Store type is complex due to SSR constraints
 let store: any = null;
 
 if (browser) {
@@ -30,8 +31,9 @@ let newItem = $state("");
 let message = $state("");
 
 // Extract connection state store for easier access
-// biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template via $connectionState
-const { connectionState } = store || { connectionState: { subscribe: () => () => {} } };
+const { connectionState } = store || {
+	connectionState: { subscribe: () => () => {} },
+};
 
 // Update message when store changes
 $effect(() => {
@@ -43,6 +45,7 @@ $effect(() => {
 // Update store when message changes
 $effect(() => {
 	if (store && message !== ($store?.message || "")) {
+		// biome-ignore lint/suspicious/noExplicitAny: Store state type is dynamic
 		store.update((s: any) => ({ ...s, message }));
 	}
 });
@@ -50,6 +53,7 @@ $effect(() => {
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
 function increment() {
 	if (store) {
+		// biome-ignore lint/suspicious/noExplicitAny: Store state type is dynamic
 		store.update((state: any) => ({
 			...state,
 			count: (state.count ?? 0) + 1,
@@ -60,6 +64,7 @@ function increment() {
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
 function decrement() {
 	if (store) {
+		// biome-ignore lint/suspicious/noExplicitAny: Store state type is dynamic
 		store.update((state: any) => ({
 			...state,
 			count: (state.count ?? 0) - 1,
@@ -71,6 +76,7 @@ function decrement() {
 function addItem() {
 	if (!newItem.trim() || !store) return;
 
+	// biome-ignore lint/suspicious/noExplicitAny: Store state type is dynamic
 	store.update((state: any) => ({
 		...state,
 		items: [...(state.items ?? []), newItem.trim()],
@@ -82,8 +88,10 @@ function addItem() {
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
 function removeItem(index: number) {
 	if (store) {
+		// biome-ignore lint/suspicious/noExplicitAny: Store state type is dynamic
 		store.update((state: any) => ({
 			...state,
+			// biome-ignore lint/suspicious/noExplicitAny: Filter callback parameters are dynamic
 			items: (state.items ?? []).filter((_: any, i: any) => i !== index),
 		}));
 	}
