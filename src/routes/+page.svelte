@@ -22,16 +22,29 @@ const store = collabWritable(
 );
 
 let newItem = $state("");
+let message = $state("");
 
 // Extract connection state store for easier access
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template via $connectionState
 const { connectionState } = store;
 
+// Update message when store changes
+$effect(() => {
+	message = $store.message || "";
+});
+
+// Update store when message changes
+$effect(() => {
+	if (message !== ($store.message || "")) {
+		store.update((s) => ({ ...s, message }));
+	}
+});
+
 // biome-ignore lint/correctness/noUnusedVariables: Used in Svelte template
 function increment() {
 	store.update((state) => ({
 		...state,
-		count: state.count + 1,
+		count: (state.count ?? 0) + 1,
 	}));
 }
 
@@ -39,7 +52,7 @@ function increment() {
 function decrement() {
 	store.update((state) => ({
 		...state,
-		count: state.count - 1,
+		count: (state.count ?? 0) - 1,
 	}));
 }
 
@@ -49,7 +62,7 @@ function addItem() {
 
 	store.update((state) => ({
 		...state,
-		items: [...state.items, newItem.trim()],
+		items: [...(state.items ?? []), newItem.trim()],
 	}));
 
 	newItem = "";
@@ -59,7 +72,7 @@ function addItem() {
 function removeItem(index: number) {
 	store.update((state) => ({
 		...state,
-		items: state.items.filter((_, i) => i !== index),
+		items: (state.items ?? []).filter((_, i) => i !== index),
 	}));
 }
 
@@ -107,7 +120,7 @@ const statusColor = $derived.by(() => {
 			</p>
 			
 			<!-- Connection Status -->
-			<div class="mt-4 flex items-center justify-center gap-3">
+			<div class="mt-4 flex items-center justify-center gap-3" data-testid="connection-status">
 				<div class="flex items-center gap-2">
 					<div class="w-3 h-3 rounded-full {statusColor} animate-pulse"></div>
 					<span class="text-sm font-medium text-gray-700">
@@ -132,17 +145,19 @@ const statusColor = $derived.by(() => {
 					<button
 						onclick={decrement}
 						class="w-12 h-12 bg-red-500 hover:bg-red-600 text-white rounded-lg text-2xl font-bold transition-colors"
+						data-testid="decrement-btn"
 					>
 						−
 					</button>
 					
-					<div class="text-6xl font-bold text-purple-600 min-w-[120px] text-center">
-						{$store.count}
+					<div class="text-6xl font-bold text-purple-600 min-w-[120px] text-center" data-testid="counter-display">
+						{$store.count ?? 0}
 					</div>
 					
 					<button
 						onclick={increment}
 						class="w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-lg text-2xl font-bold transition-colors"
+						data-testid="increment-btn"
 					>
 						+
 					</button>
@@ -161,11 +176,14 @@ const statusColor = $derived.by(() => {
 				
 				<input
 					type="text"
-					bind:value={$store.message}
-					onchange={(e) => store.update(s => ({ ...s, message: e.currentTarget.value }))}
+					bind:value={message}
 					class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-lg"
 					placeholder="Type a message..."
+					data-testid="message-input"
 				/>
+				<div class="text-sm text-gray-600 mt-4" data-testid="message-display">
+					{$store.message || ""}
+				</div>
 				
 				<p class="text-sm text-gray-600 mt-4">
 					Type to edit. Your changes appear instantly for all connected users!
@@ -186,23 +204,26 @@ const statusColor = $derived.by(() => {
 					onkeydown={(e) => e.key === 'Enter' && addItem()}
 					class="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
 					placeholder="Add a new item..."
+					data-testid="todo-input"
 				/>
 				<button
 					onclick={addItem}
 					class="px-6 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-medium transition-colors"
+					data-testid="add-todo-btn"
 				>
 					Add
 				</button>
 			</div>
 			
-			{#if $store.items.length > 0}
-				<ul class="space-y-2">
+			{#if $store.items && $store.items.length > 0}
+				<ul class="space-y-2" data-testid="todo-list">
 					{#each $store.items as item, index}
 						<li class="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
 							<span class="text-gray-800">{item}</span>
 							<button
 								onclick={() => removeItem(index)}
 								class="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
+								data-testid="remove-todo-btn"
 							>
 								Remove
 							</button>
@@ -246,6 +267,7 @@ const statusColor = $derived.by(() => {
 			<button
 				onclick={clearAll}
 				class="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+				data-testid="clear-all-btn"
 			>
 				Clear All
 			</button>

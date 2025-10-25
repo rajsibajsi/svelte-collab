@@ -213,7 +213,47 @@ server.listen(PORT, HOST, () => {
 // Graceful shutdown
 function shutdown(): void {
 	console.log("\n🛑 Shutting down server...");
+
+	// Close all WebSocket connections first
+	let totalConnections = 0;
+
+	// Count total connections
+	for (const doc of docs.values()) {
+		totalConnections += doc.connections.size;
+	}
+
+	if (totalConnections === 0) {
+		// No connections, close immediately
+		wss.close(() => {
+			server.close(() => {
+				console.log("👋 Server stopped");
+				process.exit(0);
+			});
+		});
+		return;
+	}
+
+	// Close all connections
+	for (const doc of docs.values()) {
+		for (const ws of doc.connections.values()) {
+			ws.close(1000, "Server shutting down");
+		}
+	}
+
+	// Set a timeout to force close if connections don't close gracefully
+	const forceCloseTimeout = setTimeout(() => {
+		console.log("⚠️  Force closing server...");
+		wss.close(() => {
+			server.close(() => {
+				console.log("👋 Server stopped (forced)");
+				process.exit(0);
+			});
+		});
+	}, 5000); // 5 second timeout
+
+	// Close WebSocket server
 	wss.close(() => {
+		clearTimeout(forceCloseTimeout);
 		server.close(() => {
 			console.log("👋 Server stopped");
 			process.exit(0);

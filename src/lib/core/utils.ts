@@ -53,7 +53,13 @@ export function ymapToObject(ymap: any): any {
 	const obj: any = {};
 	// biome-ignore lint/suspicious/noExplicitAny: Y.js forEach callback uses any
 	ymap.forEach((value: any, key: string) => {
-		obj[key] = convertYType(value);
+		const convertedValue = convertYType(value);
+		// Handle NaN values by converting them to 0 for numbers
+		if (typeof convertedValue === "number" && Number.isNaN(convertedValue)) {
+			obj[key] = 0;
+		} else {
+			obj[key] = convertedValue;
+		}
 	});
 	return obj;
 }
