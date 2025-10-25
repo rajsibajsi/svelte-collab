@@ -121,7 +121,8 @@ onDestroy(() => {
 const statusColor = $derived.by(() => {
 	if (!connectionState || !store) return "bg-gray-500";
 	try {
-		switch ($connectionState.status) {
+		const status = $connectionState?.status;
+		switch (status) {
 			case "connected":
 				return "bg-green-500";
 			case "connecting":
@@ -155,7 +156,7 @@ const statusColor = $derived.by(() => {
 				<div class="flex items-center gap-2">
 					<div class="w-3 h-3 rounded-full {statusColor} animate-pulse"></div>
 					<span class="text-sm font-medium text-gray-700">
-						{connectionState ? $connectionState.status : "disconnected"}
+						{connectionState ? ($connectionState?.status || "disconnected") : "disconnected"}
 					</span>
 				</div>
 				<div class="text-sm text-gray-500">
