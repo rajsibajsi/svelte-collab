@@ -13,16 +13,16 @@ importers:
         version: 0.2.114
       y-indexeddb:
         specifier: ^9.0.12
-        version: 9.0.12(yjs@13.6.27)
+        version: 9.0.12(yjs@13.6.28)
       y-protocols:
-        specifier: ^1.0.6
-        version: 1.0.6(yjs@13.6.27)
+        specifier: ^1.0.7
+        version: 1.0.7(yjs@13.6.28)
       y-websocket:
         specifier: ^3.0.0
-        version: 3.0.0(yjs@13.6.27)
+        version: 3.0.0(yjs@13.6.28)
       yjs:
-        specifier: ^13.6.27
-        version: 13.6.27
+        specifier: ^13.6.28
+        version: 13.6.28
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.3.0
@@ -1101,8 +1101,8 @@ packages:
     peerDependencies:
       yjs: ^13.0.0
 
-  y-protocols@1.0.6:
-    resolution: {integrity: sha512-vHRF2L6iT3rwj1jub/K5tYcTT/mEYDUppgNPXwp8fmLpui9f7Yeq3OEtTLVF012j39QnV+KEQpNqoN7CWU7Y9Q==}
+  y-protocols@1.0.7:
+    resolution: {integrity: sha512-YSVsLoXxO67J6eE/nV4AtFtT3QEotZf5sK5BHxFBXso7VDUT3Tx07IfA6hsu5Q5OmBdMkQVmFZ9QOA7fikWvnw==}
     engines: {node: '>=16.0.0', npm: '>=8.0.0'}
     peerDependencies:
       yjs: ^13.0.0
@@ -1113,8 +1113,8 @@ packages:
     peerDependencies:
       yjs: ^13.5.6
 
-  yjs@13.6.27:
-    resolution: {integrity: sha512-OIDwaflOaq4wC6YlPBy2L6ceKeKuF7DeTxx+jPzv1FHn9tCZ0ZwSRnUBxD05E3yed46fv/FWJbvR+Ud7x0L7zw==}
+  yjs@13.6.28:
+    resolution: {integrity: sha512-EgnDOXs8+hBVm6mq3/S89Kiwzh5JRbn7w2wXwbrMRyKy/8dOFsLvuIfC+x19ZdtaDc0tA9rQmdZzbqqNHG44wA==}
     engines: {node: '>=16.0.0', npm: '>=8.0.0'}
 
   zimmerframe@1.1.4:
@@ -1941,23 +1941,23 @@ snapshots:
 
   ws@8.18.3: {}
 
-  y-indexeddb@9.0.12(yjs@13.6.27):
+  y-indexeddb@9.0.12(yjs@13.6.28):
     dependencies:
       lib0: 0.2.114
-      yjs: 13.6.27
+      yjs: 13.6.28
 
-  y-protocols@1.0.6(yjs@13.6.27):
+  y-protocols@1.0.7(yjs@13.6.28):
     dependencies:
       lib0: 0.2.114
-      yjs: 13.6.27
+      yjs: 13.6.28
 
-  y-websocket@3.0.0(yjs@13.6.27):
+  y-websocket@3.0.0(yjs@13.6.28):
     dependencies:
       lib0: 0.2.114
-      y-protocols: 1.0.6(yjs@13.6.27)
-      yjs: 13.6.27
+      y-protocols: 1.0.7(yjs@13.6.28)
+      yjs: 13.6.28
 
-  yjs@13.6.27:
+  yjs@13.6.28:
     dependencies:
       lib0: 0.2.114
 
